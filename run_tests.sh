@@ -14,8 +14,13 @@ if multipass info k3s-test >/dev/null 2>&1; then
     multipass purge
 fi
 
+# Export your public key as an environment variable
+export SSH_PUBLIC_KEY="$(cat ~/.ssh/id_rsa.pub)"
+
+# Generate cloud-init.yaml with your public key
+envsubst <cloud-init.yaml >cloud-init.generated.yaml
 # Launch VM
-multipass launch --name k3s-test --cpus 2 --memory 4G --disk 20G 24.04 || true
+multipass launch --name k3s-test --cpus 2 --memory 4G --disk 20G 24.04 --cloud-init cloud-init.yaml
 
 # Inject your public SSH key into the VM for Ansible access
 multipass exec k3s-test -- mkdir -p /home/ubuntu/.ssh

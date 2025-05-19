@@ -7,5 +7,5 @@
     - k3s
     - longhorn
     - helm
-    - cert-manager
+    - cert_manager
     - harbor

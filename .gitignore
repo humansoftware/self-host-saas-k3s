@@ -1,2 +1,2 @@
 .vagrant
-group_vars/all.secrets.yml
+group_vars/all/secrets.yml

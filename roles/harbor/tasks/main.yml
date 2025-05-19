@@ -24,8 +24,59 @@
   args:
     creates: /tmp/harbor-installed
 
-- name: Wait for Harbor core pod to be ready
+- name: Wait for Harbor core pod to be ready and show logs on failure
+  block:
+    - name: Wait for Harbor core pod to be ready
+      shell: |
+        kubectl -n {{ harbor_namespace }} wait --for=condition=Ready pod -l app=harbor,component=core --timeout=600s
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      register: harbor_core_wait
+      failed_when: harbor_core_wait.rc != 0
+  rescue:
+    - name: Output Harbor core pod status
+      shell: |
+        kubectl -n {{ harbor_namespace }} get pods -l app=harbor,component=core -o wide
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      register: harbor_core_pods_status
+      ignore_errors: true
+
+    - name: Output Harbor core pod logs
+      shell: |
+        for pod in $(kubectl -n {{ harbor_namespace }} get pods -l app=harbor,component=core -o jsonpath='{.items[*].metadata.name}'); do
+          echo "==== $pod ====";
+          kubectl -n {{ harbor_namespace }} logs $pod || true;
+        done
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      register: harbor_core_pod_logs
+      ignore_errors: true
+
+    - name: Show Harbor core pod status
+      debug:
+        var: harbor_core_pods_status.stdout
+
+    - name: Show Harbor core pod logs
+      debug:
+        var: harbor_core_pod_logs.stdout
+
+- name: Create Certificate for Harbor
   shell: |
-    kubectl -n {{ harbor_namespace }} wait --for=condition=Ready pod -l app=harbor,component=core --timeout=600s
+    kubectl apply -f - <<EOF
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      name: harbor-tls
+      namespace: {{ harbor_namespace }}
+    spec:
+      secretName: harbor-tls
+      issuerRef:
+        name: letsencrypt-prod
+        kind: ClusterIssuer
+      commonName: {{ harbor_domain }}
+      dnsNames:
+      - {{ harbor_domain }}
+    EOF
   environment:
     KUBECONFIG: "{{ kubeconfig_path }}"
