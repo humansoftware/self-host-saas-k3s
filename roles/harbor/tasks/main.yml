@@ -28,7 +28,7 @@
   block:
     - name: Wait for Harbor core pod to be ready
       shell: |
-        kubectl -n {{ harbor_namespace }} wait --for=condition=Ready pod -l app=harbor,component=core --timeout=600s
+        kubectl -n {{ harbor_namespace }} wait --for=condition=Ready pod -l app=harbor,component=core --timeout=300s
       environment:
         KUBECONFIG: "{{ kubeconfig_path }}"
       register: harbor_core_wait
@@ -60,6 +60,10 @@
     - name: Show Harbor core pod logs
       debug:
         var: harbor_core_pod_logs.stdout
+
+    - name: Fail the play if Harbor core pod is not ready
+      fail:
+        msg: "Harbor core pod failed to become ready. See previous output for pod status and logs."
 
 - name: Create Certificate for Harbor
   shell: |

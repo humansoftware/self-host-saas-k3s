@@ -1,3 +1,11 @@
+- name: Ensure /var/lib/longhorn exists and is writable
+  file:
+    path: /var/lib/longhorn
+    state: directory
+    owner: 1000
+    group: 1000
+    mode: "0755"
+
 - name: Install Longhorn using kubectl
   shell: |
     kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.5.3/deploy/longhorn.yaml
