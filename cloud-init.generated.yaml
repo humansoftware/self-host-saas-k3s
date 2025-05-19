@@ -1,0 +1,17 @@
+#cloud-config
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users, admin
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC3j3iqPDocscOU1Oo2nU+qM7QEdzilaT7vYRqtbv1h0WahCvK5z1NPhtpIAKh1649fZYa9+ISeyml2fLZhUi3ueIX1f/7BKaKHF3rwG/7MtCIwLL33Ro7DIszT7uFg1sLv/yKBMhXaG5tI/SouHoOkSiER74SSZTONVzZQLBaD+lRVqjFBEpvkjT9vhmfINSBOeRL2lhcA8qOBJzNQ7tKBEV/ho1aUaApEM0xqmvKhhKFRnLjbiL4M4rfHNbF+64P+knCt07mMtMiUXsT2RtnY/NKIOdtxW/1qlw7QXcRKle0X7YnjPw/BxnzptBpUIzlioVqN0xWBvtFRwbPB0iF2Z+fycFDQV/Giypw2eQTurv8l1tVm8teKPSvoTeiM6hUfdXLWYCWgPgLpdo09zOadQWmJbhm86XWnrLTiFURWhucmO2M/nXoTUmdgW2Vm1VeIWsP44ZlagKzdJkC/6KUG9bHBUz2iFVqWRfvMTqYG6W0ScKF8KP23RurR+0/3Mnc= mvallebr@mvallebr-desktop # Replace this with your actual public key or use envsubst in your script
+
+package_update: true
+package_upgrade: true
+packages:
+  - socat
+
+runcmd:
+  # Example: Enable IP forwarding (optional)
+  - sysctl -w net.ipv4.ip_forward=1

@@ -1,0 +1,17 @@
+#cloud-config
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users, admin
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${SSH_PUBLIC_KEY} # Replace this with your actual public key or use envsubst in your script
+
+package_update: true
+package_upgrade: true
+packages:
+  - socat
+
+runcmd:
+  # Example: Enable IP forwarding (optional)
+  - sysctl -w net.ipv4.ip_forward=1
