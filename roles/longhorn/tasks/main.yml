@@ -1,0 +1,52 @@
+- name: Install Longhorn using kubectl
+  shell: |
+    kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.5.3/deploy/longhorn.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  args:
+    creates: /var/lib/rancher/k3s/server/manifests/longhorn.yaml
+
+- name: Wait for Longhorn pods to be created
+  shell: |
+    until kubectl -n {{ longhorn_namespace }} get pods | grep -v NAME; do sleep 2; done
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  retries: 30
+  delay: 2
+  register: wait_longhorn_pods
+  until: wait_longhorn_pods.rc == 0
+
+- name: Wait for Longhorn pods to be ready and show logs on failure
+  block:
+    - name: Wait for Longhorn pods to be ready
+      shell: |
+        kubectl -n {{ longhorn_namespace }} wait --for=condition=Ready pod --all --timeout=300s
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+  rescue:
+    - name: Output Longhorn pod status
+      shell: |
+        kubectl -n {{ longhorn_namespace }} get pods -o wide
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      register: longhorn_pods_status
+      ignore_errors: true
+
+    - name: Output Longhorn pod logs
+      shell: |
+        for pod in $(kubectl -n {{ longhorn_namespace }} get pods -o jsonpath='{.items[*].metadata.name}'); do
+          echo "==== $pod ====";
+          kubectl -n {{ longhorn_namespace }} logs $pod || true;
+        done
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      register: longhorn_pod_logs
+      ignore_errors: true
+
+    - name: Show Longhorn pod status
+      debug:
+        var: longhorn_pods_status.stdout
+
+    - name: Show Longhorn pod logs
+      debug:
+        var: longhorn_pod_logs.stdout

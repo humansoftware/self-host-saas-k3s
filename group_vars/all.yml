@@ -1,0 +1,16 @@
+k3s_version: v1.29.4+k3s1
+longhorn_namespace: longhorn-system
+registry_namespace: registry
+registry_port: 5000
+harbor_port: 30003
+cert_manager_email: "mvallebr@gmail.com"
+
+harbor_admin_password: Harbor12345
+harbor_namespace: harbor
+harbor_version: 1.12.0
+harbor_domain: harbor.example.com # Your DNS name for Harbor
+harbor_tls_cert_source: auto # 'auto' for Let's Encrypt, 'secret' for custom secret
+harbor_tls_secret_name: harbor-tls # Only needed if using 'secret'
+harbor_external_url: "https://{{ harbor_domain }}"
+harbor_storage_class: longhorn
+harbor_registry_size: 10Gi

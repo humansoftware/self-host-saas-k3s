@@ -1,0 +1,48 @@
+- name: Install cert-manager CRDs
+  shell: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.crds.yaml
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Add cert-manager Helm repo
+  shell: helm repo add jetstack https://charts.jetstack.io
+  args:
+    creates: /root/.cache/helm/repository/jetstack-index.yaml
+
+- name: Update Helm repos
+  shell: helm repo update
+
+- name: Install cert-manager
+  shell: |
+    helm upgrade --install cert-manager jetstack/cert-manager \
+      --namespace cert-manager --create-namespace \
+      --version v1.14.4
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Create Let’s Encrypt ClusterIssuer
+  shell: |
+    kubectl apply -f - <<EOF
+    apiVersion: cert-manager.io/v1
+    kind: ClusterIssuer
+    metadata:
+      name: letsencrypt-prod
+    spec:
+      acme:
+        server: https://acme-v02.api.letsencrypt.org/directory
+        email: {{cert_manager_email}}
+        privateKeySecretRef:
+          name: letsencrypt-prod
+        solvers:
+        - http01:
+            ingress:
+              class: nginx
+    EOF
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Install NGINX Ingress Controller
+  shell: |
+    helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+      --namespace ingress-nginx --create-namespace
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"

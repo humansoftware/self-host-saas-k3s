@@ -1,0 +1,31 @@
+- name: Create Harbor namespace
+  shell: kubectl create namespace {{ harbor_namespace }} --dry-run=client -o yaml | kubectl apply -f -
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+
+- name: Install Harbor via Helm with Ingress and Let’s Encrypt
+  shell: |
+    helm upgrade --install harbor harbor/harbor \
+      --namespace {{ harbor_namespace }} \
+      --create-namespace \
+      --version {{ harbor_version }} \
+      --set expose.type=ingress \
+      --set expose.ingress.hosts.core={{ harbor_domain }} \
+      --set expose.tls.enabled=true \
+      --set expose.tls.certSource={{ harbor_tls_cert_source }} \
+      {% if harbor_tls_cert_source == 'secret' %}--set expose.tls.secret.secretName={{ harbor_tls_secret_name }} {% endif %}\
+      --set externalURL="{{ harbor_external_url }}" \
+      --set harborAdminPassword="{{ harbor_admin_password }}" \
+      --set persistence.enabled=true \
+      --set persistence.storageClass={{ harbor_storage_class }} \
+      --set persistence.persistentVolumeClaim.registry.size={{ harbor_registry_size }}
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
+  args:
+    creates: /tmp/harbor-installed
+
+- name: Wait for Harbor core pod to be ready
+  shell: |
+    kubectl -n {{ harbor_namespace }} wait --for=condition=Ready pod -l app=harbor,component=core --timeout=600s
+  environment:
+    KUBECONFIG: "{{ kubeconfig_path }}"
