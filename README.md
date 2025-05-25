@@ -12,6 +12,7 @@ If you don't have Ansible installed, you can set it up on your local machine wit
 ```bash
 sudo apt update
 sudo apt install -y ansible
+ansible-galaxy --version
 ```
 
 For more details, refer to the [Ansible installation guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html).
@@ -29,6 +30,46 @@ For more details, refer to the [Ansible installation guide](https://docs.ansible
 - Ansible installed on your local machine.
 - SSH access to the target server with sudo privileges.
 
+### SSH Key Setup
+
+Make sure your SSH public key is added to the `authorized_keys` of the user you will use to connect (e.g., `ubuntu`) on your server.  
+This allows Ansible to connect without a password.
+
+Example (from your local machine):
+```bash
+ssh-copy-id ubuntu@YOUR_SERVER_PUBLIC_IP
+```
+
+Or manually add the contents of your `~/.ssh/id_rsa.pub` to `/home/ubuntu/.ssh/authorized_keys` on the server.
+
+**Note:**  
+You can specify which SSH key to use by setting the `ansible_ssh_private_key_file` variable in your `inventory.yml` or host/group vars.
+
+## Setting Up Required Secrets and Variables
+
+Before running the playbook, you must configure your secrets:
+
+1. **Copy the secrets template and edit it:**
+    ```bash
+    cp group_vars/all/secrets.example.yml group_vars/all/secrets.yml
+    ```
+    Open `group_vars/all/secrets.yml` and fill in all required values, such as your server's public IP (`host_public_ip`), registry credentials, and any other sensitive information.
+
+    Example:
+    ```yaml
+    host_public_ip: "YOUR_SERVER_PUBLIC_IP"
+    registry_password: "your-registry-password"
+    # ...other secrets...
+    ```
+
+2. **Defaults and other variables:**
+    - The file `group_vars/all/variables.yml` contains default values for most settings. You usually do **not** need to edit this file unless you want to override a default.
+
+**Note:**  
+All sensitive or environment-specific values should be set in `group_vars/all/secrets.yml`.  
+Do **not** commit your `secrets.yml` file to version control.
+
+
 ## Usage
 
 1. Clone this repository:
@@ -37,20 +78,13 @@ For more details, refer to the [Ansible installation guide](https://docs.ansible
     cd k3s-platform-ansible
     ```
 
-2. Create a `secrets.ini` file with your sensitive information:
-    ```ini
-    [secrets]
-    registry_username=your_registry_username
-    registry_password=your_registry_password
-    backblaze_key_id=your_backblaze_key_id
-    backblaze_application_key=your_backblaze_application_key
-    ```
+2. Copy `group_vars/all/secrets.example.yml` to `group_vars/all/secrets.yml` and edit the secrets needed. Also, review `group_vars/all/variables.yml` to make sure it is adequate to your needs.
 
-3. Update the `inventory.ini` file with your server details and reference the `secrets.ini` file.
+3. Update the `inventory.ini` file with your server details.
 
 4. Run the playbook:
     ```bash
-    ansible-playbook playbook.yml -i inventory.ini
+    ansible-galaxy install -r requirements.yml
     ```
 5. Verify the installation:
 

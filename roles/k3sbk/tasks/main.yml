@@ -1,20 +1,20 @@
 - name: Install k3s (latest stable)
-  shell: |
+  ansible.builtin.shell: |
     curl -sfL https://get.k3s.io | sh -s - --docker
   args:
     creates: /usr/local/bin/k3s
 
 - name: Wait for k3s service to be active
-  systemd:
+  ansible.builtin.systemd:
     name: k3s
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Get kubeconfig
-  slurp:
+  ansible.builtin.slurp:
     src: /etc/rancher/k3s/k3s.yaml
   register: kubeconfig
 
 - name: Set KUBECONFIG for future tasks
-  set_fact:
+  ansible.builtin.set_fact:
     kubeconfig_path: /etc/rancher/k3s/k3s.yaml

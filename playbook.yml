@@ -1,11 +1,18 @@
 ---
-- name: Install k3s, Longhorn, and a container registry
+- name: Install docker
   hosts: all
-  become: yes
+  become: true
   roles:
-    - docker
-    - k3s
-    - longhorn
-    - helm
-    - cert_manager
-    - harbor
+    - geerlingguy.docker
+
+- name: Setup K3s Cluster
+  hosts: k3s_cluster
+  become: true
+  roles:
+    - k3s_cluster
+
+- name: Configure firewall
+  hosts: all
+  become: true
+  roles:
+    - firewall

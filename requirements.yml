@@ -1,0 +1,9 @@
+collections:
+  - name: community.docker
+  - name: community.general
+  - name: k3s.orchestration
+    type: git
+    source: https://github.com/k3s-io/k3s-ansible.git
+
+roles:
+  - name: geerlingguy.docker

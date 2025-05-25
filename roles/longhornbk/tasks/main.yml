@@ -58,3 +58,69 @@
     - name: Show Longhorn pod logs
       debug:
         var: longhorn_pod_logs.stdout
+
+# BACKUP TARGET
+# BACKBLAZE B2
+
+- name: Create Longhorn backup credential secret for Backblaze B2
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: longhorn-backblaze-secret
+        namespace: "{{ longhorn_namespace }}"
+      stringData:
+        AWS_ACCESS_KEY_ID: "{{ backblaze_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ backblaze_application_key }}"
+
+- name: Set Longhorn backup target to Backblaze B2
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: longhorn.io/v1beta2
+      kind: Setting
+      metadata:
+        name: backup-target
+        namespace: "{{ longhorn_namespace }}"
+      value: "s3://{{ backblaze_bucket }}@{{backblaze_region}}/"
+
+- name: Set Longhorn backup target credential secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: longhorn.io/v1beta2
+      kind: Setting
+      metadata:
+        name: backup-target-credential-secret
+        namespace: "{{ longhorn_namespace }}"
+      value: "longhorn-backblaze-secret"
+
+- name: Set Longhorn S3 endpoint for Backblaze B2
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: longhorn.io/v1beta2
+      kind: Setting
+      metadata:
+        name: backup-s3-endpoint
+        namespace: "{{ longhorn_namespace }}"
+      value: "{{ backblaze_endpoint }}"
+
+- name: Create Longhorn weekly recurring backup job
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: longhorn.io/v1beta2
+      kind: RecurringJob
+      metadata:
+        name: weekly-backup
+        namespace: "{{ longhorn_namespace }}"
+      spec:
+        cron: "0 3 * * 0" # Every Sunday at 03:00
+        task: backup
+        groups:
+          - default
+        retain: 4 # Keep last 4 backups
+        concurrency: 1

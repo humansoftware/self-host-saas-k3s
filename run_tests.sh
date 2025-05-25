@@ -28,14 +28,11 @@ multipass exec k3s-test -- bash -c "echo '$(cat ~/.ssh/id_rsa.pub)' >> /home/ubu
 multipass exec k3s-test -- chown ubuntu:ubuntu /home/ubuntu/.ssh/authorized_keys
 
 # Get IP
-VM_IP=$(multipass info k3s-test | awk '/IPv4/ {print $2}')
+export HOST_PUBLIC_IP=$(multipass info k3s-test | awk '/IPv4/ {print $2}')
+envsubst <inventory.sample.yml >inventory.yml
 
-# Write inventory
-cat >inventory_multipass.ini <<EOF
-[all]
-k3s-test ansible_host=$VM_IP ansible_user=ubuntu
-EOF
-
+# Install Ansible external collections
+ansible-galaxy install -r requirements.yml
 # Run playbook
 export ANSIBLE_HOST_KEY_CHECKING=False # Disable host key checking
-ansible-playbook -i inventory_multipass.ini playbook.yml
+ansible-playbook -i inventory.yml playbook.yml
