@@ -1,46 +1,38 @@
 
-# - name: K3s Cluster Prep
-#   hosts: k3s_cluster
-#   gather_facts: true
-#   become: true
-#   tasks:
-#     - name: Fail if HOST_PUBLIC_IP is not set
-#       ansible.builtin.fail:
-#         msg: "The environment variable HOST_PUBLIC_IP must be set before running this playbook."
-#       when: host_public_ip == ""
-#   roles:
-#     - k3s.orchestration.prereq
-
-# - name: Setup K3s Server
-#   hosts: server
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - k3s.orchestration.k3s_server
-
-# - name: Setup K3s Agent
-#   hosts: agent
-#   gather_facts: true
-#   become: true
-#   roles:
-#     - k3s.orchestration.k3s_agent
-- name: Fail if HOST_PUBLIC_IP is not set
+- name: Fail if K3S_TOKEN is not set
   ansible.builtin.fail:
-    msg: "The environment variable HOST_PUBLIC_IP must be set before running this playbook."
-  when: host_public_ip is not defined or host_public_ip == ""
+    msg: "The environment variable K3S_TOKEN must be set before running this playbook."
+  when: k3s_token is not defined or k3s_token == ""
 
+- name: Set the needed secrets facts for all hosts
+  ansible.builtin.set_fact:
+    token: "{{ k3s_token }}"
+
+# Common prerequisites for all k3s_cluster hosts
 - name: Run prereq role on all k3s_cluster hosts
   ansible.builtin.include_role:
     name: k3s.orchestration.prereq
   when: "'k3s_cluster' in group_names"
 
+# Setup server nodes
 - name: Setup K3s Server
   ansible.builtin.include_role:
     name: k3s.orchestration.k3s_server
   when: "'server' in group_names"
 
+# Setup agent nodes
+- name: Ensure k3s-agent.service.env exists
+  ansible.builtin.file:
+    path: "{{ systemd_dir }}/k3s-agent.service.env"
+    state: touch
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    systemd_dir: "/etc/systemd/system"
+  when: "'agent' in group_names"
+
 - name: Setup K3s Agent
   ansible.builtin.include_role:
     name: k3s.orchestration.k3s_agent
   when: "'agent' in group_names"
-  

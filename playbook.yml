@@ -1,4 +1,13 @@
 ---
+- name: Check prerequisites
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Fail if HOST_PUBLIC_IP is not set
+      ansible.builtin.fail:
+        msg: "The environment variable HOST_PUBLIC_IP must be set before running this playbook."
+      when: host_public_ip is not defined or host_public_ip == ""
+
 - name: Install docker
   hosts: all
   become: true
@@ -8,6 +17,7 @@
 - name: Setup K3s Cluster
   hosts: k3s_cluster
   become: true
+  gather_facts: true
   roles:
     - k3s_cluster
 
