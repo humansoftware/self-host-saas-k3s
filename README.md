@@ -1,4 +1,5 @@
-# k3s-platform-ansible
+# self-host-saas-k3s
+
 
 This repository contains an Ansible playbook to set up a Kubernetes environment on a bare metal server running Ubuntu 24.04. It automates the installation and configuration of the following components:
 
@@ -29,6 +30,15 @@ For more details, refer to the [Ansible installation guide](https://docs.ansible
 - A bare metal server running Ubuntu 24.04.
 - Ansible installed on your local machine.
 - SSH access to the target server with sudo privileges.
+- **Python 3** must be installed on your local machine (the Ansible control node).
+- The **kubernetes Python client** library is required for Ansible to manage Kubernetes resources:
+    ```bash
+    pip install kubernetes
+    ```
+- **Helm 3** must be installed on your local machine:
+    - Use your package manager (e.g., `sudo apt install helm` or `sudo pacman -S helm`), or
+    - Download the binary from the [Helm releases page](https://github.com/helm/helm/releases) and place it in `/usr/local/bin/`.
+
 
 ### SSH Key Setup
 
@@ -74,8 +84,8 @@ Do **not** commit your `secrets.yml` file to version control.
 
 1. Clone this repository:
     ```bash
-    git clone https://github.com/your-username/k3s-platform-ansible.git
-    cd k3s-platform-ansible
+    git clone https://github.com/your-username/self-host-saas-k3s.git
+    cd self-host-saas-k3s
     ```
 
 2. Copy `group_vars/all/secrets.example.yml` to `group_vars/all/secrets.yml` and edit the secrets needed. Also, review `group_vars/all/variables.yml` to make sure it is adequate to your needs.
@@ -91,6 +101,25 @@ Do **not** commit your `secrets.yml` file to version control.
  - Check that k3s is running: `kubectl get nodes`
  - Ensure the container registry is accessible.
  - Confirm Longhorn is installed and backups are configured.
+
+## Local Testing with Multipass VM
+
+For local development and testing, this repository provides helper scripts:
+
+- **run_tests_vm.sh**: Provisions and starts a Multipass VM, then runs the Ansible playbook against it.
+- **vmkubectl.sh**: Allows you to run `kubectl` commands against the Kubernetes cluster running inside the VM by automatically setting up an SSH tunnel and using the correct kubeconfig.
+
+**Example usage for local testing:**
+```bash
+./run_tests_vm.sh
+./vmkubectl.sh get nodes
+```
+
+> **Note:**  
+> These scripts are intended for local testing only.  
+> For production or real server deployments, follow the main instructions below to run Ansible directly against your target host.
+
+---
 
 ## Configuration
 

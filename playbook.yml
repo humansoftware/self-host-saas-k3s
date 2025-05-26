@@ -21,6 +21,23 @@
   roles:
     - k3s_cluster
 
+- name: Set kubeconfig path fact
+  hosts: k3s_cluster
+  gather_facts: false
+  tasks:
+    - name: Set kubeconfig path fact
+      ansible.builtin.set_fact:
+        my_kubeconfig_path: "/etc/rancher/k3s/k3s.yaml"
+
+- name: Install cert-manager
+  hosts: k3s_cluster
+  become: false
+  environment:
+    KUBECONFIG: "{{ my_kubeconfig_path }}"
+  roles:
+    - role: githubixx.cert-manager-kubernetes
+      tags: role-cert-manager-kubernetes
+
 - name: Configure firewall
   hosts: all
   become: true

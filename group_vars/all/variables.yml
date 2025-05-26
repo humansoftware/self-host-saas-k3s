@@ -5,17 +5,27 @@ host_public_ip: "{{ lookup('env', 'HOST_PUBLIC_IP') }}"
 # Defaults: https://github.com/k3s-io/k3s-ansible/blob/master/roles/k3s_server/defaults/main.yml
 k3s_server_extra_args: "--docker"
 k3s_agent_extra_args: "--docker"
-
 k3s_version: v1.29.4+k3s1
-longhorn_namespace: longhorn-system
-registry_namespace: registry
-registry_port: 5000
-harbor_port: 30003
+# Cert manager configuration
+cert_manager_namespace: cert-manager
+cert_manager_helm_chart_version: v1.14.4
+cert_manager_create_namespace: true
+cert_manager_install_crds: true
+cert_manager_le_clusterissuer_options:
+  - name: letsencrypt-prod
+    email: "{{ letsencrypt_email }}"
+    server: acme-v02
+    private_key_secret_ref_name: letsencrypt-account-key
+    solvers_http01_ingress_class: "nginx"
+# longhorn_namespace: longhorn-system
+# registry_namespace: registry
+# registry_port: 5000
+# harbor_port: 30003
 
-harbor_namespace: harbor
-harbor_version: 1.12.0
-harbor_tls_cert_source: auto # 'auto' for Let's Encrypt, 'secret' for custom secret
-harbor_tls_secret_name: harbor-tls # Only needed if using 'secret'
-harbor_external_url: "https://{{ harbor_domain }}"
-harbor_storage_class: longhorn
-harbor_registry_size: 10Gi
+# harbor_namespace: harbor
+# harbor_version: 1.12.0
+# harbor_tls_cert_source: auto # 'auto' for Let's Encrypt, 'secret' for custom secret
+# harbor_tls_secret_name: harbor-tls # Only needed if using 'secret'
+# harbor_external_url: "https://{{ harbor_domain }}"
+# harbor_storage_class: longhorn
+# harbor_registry_size: 10Gi
