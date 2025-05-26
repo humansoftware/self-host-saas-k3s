@@ -1,11 +1,46 @@
 ---
-- name: Install k3s, Longhorn, and a container registry
+- name: Check prerequisites
   hosts: all
-  become: yes
+  gather_facts: false
+  tasks:
+    - name: Fail if HOST_PUBLIC_IP is not set
+      ansible.builtin.fail:
+        msg: "The environment variable HOST_PUBLIC_IP must be set before running this playbook."
+      when: host_public_ip is not defined or host_public_ip == ""
+
+- name: Install docker
+  hosts: all
+  become: true
   roles:
-    - docker
-    - k3s
-    - longhorn
-    - helm
-    - cert_manager
-    - harbor
+    - geerlingguy.docker
+
+- name: Setup K3s Cluster
+  hosts: k3s_cluster
+  become: true
+  gather_facts: true
+  roles:
+    - k3s_cluster
+
+- name: Set kubeconfig path fact on localhost
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Set kubeconfig path for use on localhost
+      ansible.builtin.set_fact:
+        k3s_kubeconfig_path: "{{ hostvars[groups['k3s_cluster'][0]].k3s_kubeconfig_path }}"
+
+- name: Install cert-manager
+  hosts: localhost
+  become: false
+  environment:
+    KUBECONFIG: "{{ k3s_kubeconfig_path }}"
+    ANSIBLE_STDOUT_CALLBACK: debug
+  roles:
+    - role: githubixx.cert-manager-kubernetes
+      tags: role-cert-manager-kubernetes
+
+- name: Configure firewall
+  hosts: all
+  become: true
+  roles:
+    - firewall
