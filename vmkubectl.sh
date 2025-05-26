@@ -38,7 +38,7 @@ VM_IP=$(multipass info "$VM_NAME" | awk '/IPv4/ {print $2}')
 multipass exec "$VM_NAME" -- sudo cat /etc/rancher/k3s/k3s.yaml >"$KUBECONFIG_PATH"
 
 # Replace server IP with localhost in kubeconfig
-sed -i "s|server: https://.*:6443|server: https://localhost:6443|g" "$KUBECONFIG_PATH"
+# sed -i "s|server: https://.*:6443|server: https://localhost:6443|g" "$KUBECONFIG_PATH"
 
 # Start SSH tunnel in background (if not already running)
 if ! pgrep -f "ssh -N -L 6443:localhost:6443 ubuntu@${VM_IP}" >/dev/null; then

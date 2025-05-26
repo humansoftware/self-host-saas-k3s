@@ -95,8 +95,15 @@ Do **not** commit your `secrets.yml` file to version control.
 4. Run the playbook:
     ```bash
     ansible-galaxy install -r requirements.yml
+    ansible-playbook -i inventory.yml playbook.yml
     ```
-5. Verify the installation:
+5. For security reasons, the kube port set in api_port in the inventory is not open by default in the firewall. You can set up a local ssh tunnel to run local kubectl commands:
+    ```bash
+    ssh -N -L 6443:localhost:6443 ubuntu@"YOUR_PUBLIC_IP" &
+    ```
+    Alternatively, you can set the firewall config `firewall_open_k3s_ports`, which defaults to false.
+       
+6. Verify the installation:
 
  - Check that k3s is running: `kubectl get nodes`
  - Ensure the container registry is accessible.
@@ -106,12 +113,12 @@ Do **not** commit your `secrets.yml` file to version control.
 
 For local development and testing, this repository provides helper scripts:
 
-- **run_tests_vm.sh**: Provisions and starts a Multipass VM, then runs the Ansible playbook against it.
+- **run_test_vm.sh**: Provisions and starts a Multipass VM, then runs the Ansible playbook against it.
 - **vmkubectl.sh**: Allows you to run `kubectl` commands against the Kubernetes cluster running inside the VM by automatically setting up an SSH tunnel and using the correct kubeconfig.
 
 **Example usage for local testing:**
 ```bash
-./run_tests_vm.sh
+./run_test_vm.sh
 ./vmkubectl.sh get nodes
 ```
 

@@ -19,6 +19,12 @@
     rule: allow
     port: 443
 
+- name: Allow K3s API port if requested
+  community.general.ufw:
+    rule: allow
+    port: "{{ k3s_api_port | default(6443) }}"
+  when: firewall_open_k3s_ports | default(false)
+
 - name: Enable UFW
   community.general.ufw:
     state: enabled

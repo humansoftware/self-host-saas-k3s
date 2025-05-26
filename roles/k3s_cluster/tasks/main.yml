@@ -1,8 +1,16 @@
-
+# This ansible will set up a K3s cluster with server and agent nodes,
+# ensuring prerequisites are met and configurations are applied.
+# As output, a fact `k3s_kubeconfig_path` will be set to the local kubeconfig file path.
+# You must ensure the required secrets are set before running this playbook.
 - name: Fail if K3S_TOKEN is not set
   ansible.builtin.fail:
     msg: "The environment variable K3S_TOKEN must be set before running this playbook."
   when: k3s_token is not defined or k3s_token == ""
+
+- name: Fail if K3S_LOCAL_KUBECONFIG is not set
+  ansible.builtin.fail:
+    msg: "The environment variable K3S_LOCAL_KUBECONFIG must be set before running this playbook."
+  when: k3s_local_kubeconfig is not defined or k3s_local_kubeconfig == ""
 
 - name: Set the needed secrets facts for all hosts
   ansible.builtin.set_fact:
@@ -18,6 +26,28 @@
 - name: Setup K3s Server
   ansible.builtin.include_role:
     name: k3s.orchestration.k3s_server
+  when: "'server' in group_names"
+
+# Copy kubeconfig to local machine and set kubeconfig path fact
+- name: Fetch kubeconfig to control node
+  ansible.builtin.fetch:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "{{ k3s_local_kubeconfig }}"
+    flat: true
+  when: "'server' in group_names"
+
+- name: Patch kubeconfig to use public IP
+  delegate_to: localhost
+  become: false
+  ansible.builtin.replace:
+    path: "{{ k3s_local_kubeconfig }}"
+    regexp: 'server: https://127.0.0.1:6443'
+    replace: "server: https://{{ host_public_ip }}:6443"
+  when: "'server' in group_names"
+
+- name: Set kubeconfig path fact
+  ansible.builtin.set_fact:
+    k3s_kubeconfig_path: "{{ k3s_local_kubeconfig }}"
   when: "'server' in group_names"
 
 # Setup agent nodes

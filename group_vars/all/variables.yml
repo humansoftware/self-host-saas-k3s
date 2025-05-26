@@ -3,9 +3,10 @@ host_public_ip: "{{ lookup('env', 'HOST_PUBLIC_IP') }}"
 
 # k3s cluster configuration
 # Defaults: https://github.com/k3s-io/k3s-ansible/blob/master/roles/k3s_server/defaults/main.yml
-k3s_server_extra_args: "--docker"
-k3s_agent_extra_args: "--docker"
+k3s_server_extra_args: "--docker --tls-san {{ host_public_ip }}"
+k3s_agent_extra_args: "--docker --tls-san {{ host_public_ip }}"
 k3s_version: v1.29.4+k3s1
+k3s_api_port: 6443
 # Cert manager configuration
 cert_manager_namespace: cert-manager
 cert_manager_helm_chart_version: v1.14.4

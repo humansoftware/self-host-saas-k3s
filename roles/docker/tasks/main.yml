@@ -1,9 +1,0 @@
-- name: Install Docker using community.docker collection
-  community.docker.docker_install:
-    state: present
-
-- name: Ensure Docker service is started and enabled
-  ansible.builtin.service:
-    name: docker
-    state: started
-    enabled: yes
