@@ -1,12 +1,10 @@
 collections:
   - name: community.docker
   - name: community.general
+  - name: kubernetes.core
   - name: k3s.orchestration
     type: git
     source: https://github.com/k3s-io/k3s-ansible.git
-  - name: kubernetes.core
 
 roles:
   - name: geerlingguy.docker
-  - name: githubixx.cert-manager-kubernetes
-    src: https://github.com/githubixx/ansible-role-cert-manager-kubernetes.git

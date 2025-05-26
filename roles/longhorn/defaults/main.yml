@@ -1,0 +1,11 @@
+longhorn_namespace: longhorn-system
+backblaze_key_id: "CHANGEME"
+backblaze_application_key: "CHANGEME"
+backblaze_bucket: "CHANGEME"
+backblaze_region: "us-east-005"
+backblaze_endpoint: "https://s3.{{backblaze_region}}.backblazeb2.com"
+longhorn_helm_values:
+  defaultSettings:
+    backupTarget: "s3://{{ backblaze_bucket }}@{{ backblaze_region }}/"
+    backupTargetCredentialSecret: longhorn-backblaze-secret
+    backupS3Endpoint: "{{ backblaze_endpoint }}"

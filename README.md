@@ -33,7 +33,7 @@ For more details, refer to the [Ansible installation guide](https://docs.ansible
 - **Python 3** must be installed on your local machine (the Ansible control node).
 - The **kubernetes Python client** library is required for Ansible to manage Kubernetes resources:
     ```bash
-    pip install kubernetes
+    pip install kubernetes openshift
     ```
 - **Helm 3** must be installed on your local machine:
     - Use your package manager (e.g., `sudo apt install helm` or `sudo pacman -S helm`), or

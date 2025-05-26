@@ -1,0 +1,7 @@
+letsencrypt_email: your-email@example.com
+cert_manager_namespace: cert-manager
+cert_manager_chart_version: v1.17.2
+cert_manager_helm_repo: https://charts.jetstack.io
+cert_manager_chart_name: cert-manager
+cert_manager_release_name: cert-manager
+cert_manager_crds_url: https://github.com/cert-manager/cert-manager/releases/download/{{ cert_manager_chart_version }}/cert-manager.crds.yaml
