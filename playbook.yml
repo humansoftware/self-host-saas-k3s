@@ -21,8 +21,16 @@
   roles:
     - k3s_cluster
 
+- name: Set kubeconfig path fact on localhost
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Set kubeconfig path for use on localhost
+      ansible.builtin.set_fact:
+        k3s_kubeconfig_path: "{{ hostvars[groups['k3s_cluster'][0]].k3s_kubeconfig_path }}"
+
 - name: Install cert-manager
-  hosts: k3s_cluster
+  hosts: localhost
   become: false
   environment:
     KUBECONFIG: "{{ k3s_kubeconfig_path }}"

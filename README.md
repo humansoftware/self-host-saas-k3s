@@ -95,7 +95,7 @@ Do **not** commit your `secrets.yml` file to version control.
 4. Run the playbook:
     ```bash
     ansible-galaxy install -r requirements.yml
-    ansible-playbook -i inventory.yml playbook.yml
+    ansible-playbook -i inventory.yml playbook.yml --extra-vars action=install
     ```
 5. For security reasons, the kube port set in api_port in the inventory is not open by default in the firewall. You can set up a local ssh tunnel to run local kubectl commands:
     ```bash
