@@ -4,6 +4,7 @@ all:
       ansible_host: "{{ host_public_ip }}"
       ansible_user: ubuntu
       # ansible_ssh_private_key_file: /home/YOURUSER/.ssh/id_rsa  # Uncomment and set if not using default key
+      ansible_ssh_common_args: "-L 6443:localhost:6443" 
       api_endpoint: "{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}"
       api_port: 6443
       k3s_version: v1.30.2+k3s1

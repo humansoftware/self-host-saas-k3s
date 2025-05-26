@@ -36,14 +36,14 @@
     flat: true
   when: "'server' in group_names"
 
-- name: Patch kubeconfig to use public IP
-  delegate_to: localhost
-  become: false
-  ansible.builtin.replace:
-    path: "{{ k3s_local_kubeconfig }}"
-    regexp: 'server: https://127.0.0.1:6443'
-    replace: "server: https://{{ host_public_ip }}:6443"
-  when: "'server' in group_names"
+# - name: Patch kubeconfig to use public IP
+#   delegate_to: localhost
+#   become: false
+#   ansible.builtin.replace:
+#     path: "{{ k3s_local_kubeconfig }}"
+#     regexp: 'server: https://127.0.0.1:6443'
+#     replace: "server: https://{{ host_public_ip }}:6443"
+#   when: "'server' in group_names"
 
 - name: Set kubeconfig path fact
   ansible.builtin.set_fact:
