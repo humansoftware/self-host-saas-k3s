@@ -15,8 +15,8 @@ fi
 
 # Delete existing instance only if --restart is passed
 if [ "$RESTART" -eq 1 ]; then
-    if multipass info k3s-test >/dev/null 2>&1; then
-        multipass delete k3s-test
+    if multipass info saas-server >/dev/null 2>&1; then
+        multipass delete saas-server
         multipass purge
     fi
     # Export your public key as an environment variable
@@ -25,16 +25,16 @@ if [ "$RESTART" -eq 1 ]; then
     # Generate cloud-init.yaml with your public key
     envsubst <cloud-init.yaml >cloud-init.generated.yaml
     # Launch VM
-    multipass launch --name k3s-test --cpus 2 --memory 4G --disk 20G 24.04 --cloud-init cloud-init.yaml
+    multipass launch --name saas-server --cpus 2 --memory 4G --disk 25G 24.04 --cloud-init cloud-init.yaml
 
     # Inject your public SSH key into the VM for Ansible access
-    multipass exec k3s-test -- mkdir -p /home/ubuntu/.ssh
-    multipass exec k3s-test -- bash -c "echo '$(cat ~/.ssh/id_rsa.pub)' >> /home/ubuntu/.ssh/authorized_keys"
-    multipass exec k3s-test -- chown ubuntu:ubuntu /home/ubuntu/.ssh/authorized_keys
+    multipass exec saas-server -- mkdir -p /home/ubuntu/.ssh
+    multipass exec saas-server -- bash -c "echo '$(cat ~/.ssh/id_rsa.pub)' >> /home/ubuntu/.ssh/authorized_keys"
+    multipass exec saas-server -- chown ubuntu:ubuntu /home/ubuntu/.ssh/authorized_keys
 fi
 
 # Get IP
-export HOST_PUBLIC_IP=$(multipass info k3s-test | awk '/IPv4/ {print $2}')
+export HOST_PUBLIC_IP=$(multipass info saas-server | awk '/IPv4/ {print $2}')
 envsubst <inventory.sample.yml >inventory.yml
 
 # Install Ansible external collections

@@ -1,0 +1,11 @@
+- name: Install cert-manager
+  ansible.builtin.include_role:
+    name: cert_manager
+
+- name: Install Longhorn
+  ansible.builtin.include_role:
+    name: longhorn
+
+- name: Install Harbor
+  ansible.builtin.include_role:
+    name: harbor

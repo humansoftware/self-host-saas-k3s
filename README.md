@@ -128,6 +128,52 @@ For local development and testing, this repository provides helper scripts:
 
 ---
 
+## Accessing the Longhorn UI
+
+After installation, you can access the Longhorn web UI to manage your persistent storage and backups.
+
+By default, the Longhorn UI is exposed as a Kubernetes service in the `longhorn-system` namespace. To access it:
+
+### Option 1: Port Forwarding (Recommended for Local Access)
+
+Run the following command on your local machine (with `kubectl` configured to access your cluster):
+
+```bash
+kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80
+```
+
+Then open your browser and go to: [http://localhost:8080](http://localhost:8080)
+
+### Option 2: Expose via NodePort or LoadBalancer
+
+You can also expose the Longhorn UI using a NodePort or LoadBalancer service.  
+**Note:** This may expose your UI to the public internet. Secure access appropriately.
+
+To change the service type, edit the Longhorn Helm values (in your Ansible variables or Helm values file):
+
+```yaml
+longhorn_helm_values:
+  service:
+    ui:
+      type: NodePort
+      nodePort: 30080  # Or any available port
+```
+
+After applying, access the UI at `http://<your-node-ip>:30080`.
+
+---
+
+For more details, see the [Longhorn UI documentation](https://longhorn.io/docs/1.8.1/).
+
+## Accessing Harbor UI
+
+Similar to the Longhorn:
+
+```bash
+kubectl port-forward svc/harbor-portal -n harbor 8080:80
+```
+
+
 ## Configuration
 
 - **Container Registry**: Update the registry configuration in the playbook to match your requirements.

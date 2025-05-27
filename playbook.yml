@@ -29,22 +29,13 @@
       ansible.builtin.set_fact:
         k3s_kubeconfig_path: "{{ hostvars[groups['k3s_cluster'][0]].k3s_kubeconfig_path }}"
 
-# Install cert-manager on the K3s cluster
-- name: Install cert-manager
+- name: Install Kubernetes apps
   hosts: localhost
   become: false
   environment:
     KUBECONFIG: "{{ k3s_kubeconfig_path }}"
   roles:
-    - role: cert_manager
-
-- name: Install Longhorn
-  hosts: localhost
-  become: false
-  environment:
-    KUBECONFIG: "{{ k3s_kubeconfig_path }}"
-  roles:
-    - role: longhorn
+    - install_k8s_apps
 
 - name: Configure firewall
   hosts: all

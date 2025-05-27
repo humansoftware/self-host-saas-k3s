@@ -1,0 +1,13 @@
+harbor_namespace: harbor
+harbor_version: "1.16.4"                # Set to your desired Harbor chart version
+
+harbor_domain: "harbor.example.com"     # Change to your domain
+harbor_external_url: "https://{{ harbor_domain }}"
+
+harbor_admin_password: "ChangeMe123!"   # Change to a secure password
+
+harbor_storage_class: "longhorn-single-replica"        # Set to your cluster's storage class
+harbor_registry_size: "6Gi"
+
+harbor_tls_cert_source: "auto"          # Use "auto" for Let's Encrypt via cert-manager
+harbor_tls_secret_name: ""              # Not needed for certSource: auto

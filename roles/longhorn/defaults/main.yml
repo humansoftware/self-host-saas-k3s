@@ -5,7 +5,10 @@ backblaze_bucket: "CHANGEME"
 backblaze_region: "us-east-005"
 backblaze_endpoint: "https://s3.{{backblaze_region}}.backblazeb2.com"
 longhorn_helm_values:
-  defaultSettings:
+  defaultBackupStore:
     backupTarget: "s3://{{ backblaze_bucket }}@{{ backblaze_region }}/"
     backupTargetCredentialSecret: longhorn-backblaze-secret
+    pollInterval: 180
+  defaultSettings:
     backupS3Endpoint: "{{ backblaze_endpoint }}"
+    defaultClassReplicaCount: 1
