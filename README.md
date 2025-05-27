@@ -128,13 +128,19 @@ For local development and testing, this repository provides helper scripts:
 
 ---
 
-## Accessing the Longhorn UI
+## Accessing UIs safely
+
+The concept I used for this setup is - instead of complicated setup exposing services on k8s, I just leave the UI ports closed. In order to access the UIs, you can open an SSH tunnel to your SaaS server and then access everything you need in a safe way, without worrying about people scanning ports on your server trying to find a way of attacking it. 
+
+SSH port still has to be open - you can customise firewall role to allow this just for your local computer IP if you want to protect this one as well.
+
+### Accessing the Longhorn UI
 
 After installation, you can access the Longhorn web UI to manage your persistent storage and backups.
 
 By default, the Longhorn UI is exposed as a Kubernetes service in the `longhorn-system` namespace. To access it:
 
-### Option 1: Port Forwarding (Recommended for Local Access)
+#### Option 1: Port Forwarding (Recommended for Local Access)
 
 Run the following command on your local machine (with `kubectl` configured to access your cluster):
 
@@ -144,7 +150,7 @@ kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80
 
 Then open your browser and go to: [http://localhost:8080](http://localhost:8080)
 
-### Option 2: Expose via NodePort or LoadBalancer
+#### Option 2: Expose via NodePort or LoadBalancer
 
 You can also expose the Longhorn UI using a NodePort or LoadBalancer service.  
 **Note:** This may expose your UI to the public internet. Secure access appropriately.
@@ -165,14 +171,16 @@ After applying, access the UI at `http://<your-node-ip>:30080`.
 
 For more details, see the [Longhorn UI documentation](https://longhorn.io/docs/1.8.1/).
 
-## Accessing Harbor UI
+### Accessing Harbor UI
 
 Similar to the Longhorn:
 
 ```bash
-kubectl port-forward svc/harbor-portal -n harbor 8080:80
+kubectl port-forward svc/harbor-portal -n harbor 8081:80
+kubectl -n kube-system port-forward svc/traefik 8081:80
 ```
 
+and then access the UI at [http://localhost:8081](http://localhost:8081/). 
 
 ## Configuration
 

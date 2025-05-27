@@ -2,7 +2,7 @@
 
 # -----------------------------------------------------------------------------
 # This script:
-#   - Copies the kubeconfig from the Multipass VM (k3s-test) to /tmp/multipass_kubectl
+#   - Copies the kubeconfig from the Multipass VM (saas-server) to /tmp/multipass_kubectl
 #   - Rewrites the kubeconfig to use localhost:6443 as the API endpoint
 #   - Starts an SSH tunnel from your host to the VM for port 6443
 #   - Runs 'kubectl' with any arguments you provide, using the tunneled connection
@@ -16,12 +16,12 @@
 # Examples:
 #   ./vmkubectl.sh get nodes
 #   ./vmkubectl.sh get pods -A
-#   ./vmkubectl.sh describe node k3s-test
+#   ./vmkubectl.sh describe node saas-server
 # -----------------------------------------------------------------------------
 set -e
 set -u
 
-VM_NAME="k3s-test"
+VM_NAME="saas-server"
 KUBECONFIG_PATH="/tmp/multipass_kubectl"
 
 # Check if the VM is running

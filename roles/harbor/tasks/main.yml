@@ -24,7 +24,7 @@
           hosts:
             core: "{{ harbor_domain }}"
         tls:
-          enabled: true
+          enabled: false
           certSource: "{{ harbor_tls_cert_source }}"
           secret:
             secretName: "{{ harbor_tls_secret_name }}"

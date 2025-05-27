@@ -1,7 +1,7 @@
 harbor_namespace: harbor
 harbor_version: "1.16.4"                # Set to your desired Harbor chart version
 
-harbor_domain: "harbor.example.com"     # Change to your domain
+harbor_domain: "localhost"     # Access via ssh tunnel, see readme.md
 harbor_external_url: "https://{{ harbor_domain }}"
 
 harbor_admin_password: "ChangeMe123!"   # Change to a secure password
