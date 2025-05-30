@@ -9,3 +9,7 @@
 - name: Install Harbor
   ansible.builtin.include_role:
     name: harbor
+
+- name: Install Flux
+  ansible.builtin.include_role:
+    name: flux

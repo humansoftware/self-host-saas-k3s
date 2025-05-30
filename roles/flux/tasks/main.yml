@@ -1,0 +1,131 @@
+- name: Add FluxCD Helm repository
+  kubernetes.core.helm_repository:
+    name: fluxcd
+    repo_url: https://fluxcd-community.github.io/helm-charts
+
+- name: Install Flux via Helm
+  kubernetes.core.helm:
+    name: flux
+    chart_ref: fluxcd/flux2
+    release_namespace: flux-system
+    create_namespace: true
+    state: present
+
+- name: Create GitHub token secret for Flux (HTTPS auth)
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: flux-git-auth
+        namespace: flux-system
+      stringData:
+        username: "{{ flux_github_username }}"
+        password: "{{ flux_github_token }}"
+    wait: true
+
+- name: Create GitRepository for youread repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: source.toolkit.fluxcd.io/v1beta2
+      kind: GitRepository
+      metadata:
+        name: youread
+        namespace: flux-system
+      spec:
+        interval: 1m0s
+        url: https://github.com/youread/youread.git
+        secretRef:
+          name: flux-git-auth
+        ref:
+          branch: main
+
+- name: Create GitRepository for analisedefiis repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: source.toolkit.fluxcd.io/v1beta2
+      kind: GitRepository
+      metadata:
+        name: analisedefiis
+        namespace: flux-system
+      spec:
+        interval: 1m0s
+        url: https://github.com/analisedefiis/analisedefiis.git
+        secretRef:
+          name: flux-git-auth
+        ref:
+          branch: main
+
+- name: Create Kustomization for youread repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+      kind: Kustomization
+      metadata:
+        name: youread-app
+        namespace: flux-system
+      spec:
+        interval: 5m0s
+        path: "./clusters/k3s"
+        prune: true
+        sourceRef:
+          kind: GitRepository
+          name: youread
+        validation: client
+
+- name: Create Kustomization for analisedefiis repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+      kind: Kustomization
+      metadata:
+        name: analisedefiis-app
+        namespace: flux-system
+      spec:
+        interval: 5m0s
+        path: "./clusters/k3s"
+        prune: true
+        sourceRef:
+          kind: GitRepository
+          name: analisedefiis
+        validation: client
+
+- name: Create GitRepository for example-self-hosted-saas-app
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: source.toolkit.fluxcd.io/v1beta2
+      kind: GitRepository
+      metadata:
+        name: example-self-hosted-saas-app
+        namespace: flux-system
+      spec:
+        interval: 1m0s
+        url: https://github.com/humansoftware/example_self_hosted_saas_app.git
+        secretRef:
+          name: flux-git-auth
+        ref:
+          branch: main
+
+- name: Create Kustomization for example-self-hosted-saas-app
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+      kind: Kustomization
+      metadata:
+        name: example-self-hosted-saas-app
+        namespace: flux-system
+      spec:
+        interval: 5m0s
+        path: "./"  # update if manifests are inside a subfolder
+        prune: true
+        sourceRef:
+          kind: GitRepository
+          name: example-self-hosted-saas-app
+        validation: client
