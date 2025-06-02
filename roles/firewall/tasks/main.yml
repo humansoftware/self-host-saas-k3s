@@ -4,11 +4,23 @@
     state: present
     update_cache: true
 
-- name: Ensure SSH public key is present for user 'ubuntu'
+- name: Check that the SSH public key exists on the control machine
+  delegate_to: localhost
+  ansible.builtin.stat:
+    path: "{{ ssh_public_key_to_authorize_on_target }}"
+  register: ssh_pubkey_stat
+
+- name: Fail if the SSH public key does not exist on the control machine
+  delegate_to: localhost
+  ansible.builtin.fail:
+    msg: "The SSH public key file {{ ssh_public_key_to_authorize_on_target }} does not exist on the control machine."
+  when: not ssh_pubkey_stat.stat.exists
+
+- name: Ensure SSH public key is present for user 'ubuntu' on the remote machine
   ansible.posix.authorized_key:
     user: ubuntu
     state: present
-    key: "{{ lookup('file', '/home/ubuntu/.ssh/id_rsa.pub') }}"
+    key: "{{ lookup('file', ssh_public_key_to_authorize_on_target) }}"
 
 - name: Disable SSH password authentication
   ansible.builtin.lineinfile:
