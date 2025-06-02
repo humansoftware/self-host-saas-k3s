@@ -13,3 +13,7 @@
 - name: Install Flux
   ansible.builtin.include_role:
     name: flux
+
+- name: Install GitHub Actions Runner and integrate with Flux repos
+  ansible.builtin.include_role:
+    name: github_actions

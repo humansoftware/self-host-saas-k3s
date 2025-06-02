@@ -1,0 +1,2 @@
+flux_git_repo_interval: 1m0s
+flux_kustomization_interval: 1m0s

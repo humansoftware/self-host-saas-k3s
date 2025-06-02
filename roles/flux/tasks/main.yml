@@ -10,6 +10,8 @@
     release_namespace: flux-system
     create_namespace: true
     state: present
+    set_values:
+      - value: notificationController.enabled=true
 
 - name: Create GitHub token secret for Flux (HTTPS auth)
   kubernetes.core.k8s:
@@ -25,107 +27,39 @@
         password: "{{ flux_github_token }}"
     wait: true
 
-- name: Create GitRepository for youread repo
+- name: Create GitRepository for each app repo
   kubernetes.core.k8s:
     state: present
     definition:
       apiVersion: source.toolkit.fluxcd.io/v1beta2
       kind: GitRepository
       metadata:
-        name: youread
+        name: "{{ item.name }}"
         namespace: flux-system
       spec:
-        interval: 1m0s
-        url: https://github.com/youread/youread.git
+        interval: "{{ flux_git_repo_interval }}"
+        url: "{{ item.url }}"
         secretRef:
           name: flux-git-auth
         ref:
           branch: main
+  loop: "{{ flux_app_repos }}"
 
-- name: Create GitRepository for analisedefiis repo
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: source.toolkit.fluxcd.io/v1beta2
-      kind: GitRepository
-      metadata:
-        name: analisedefiis
-        namespace: flux-system
-      spec:
-        interval: 1m0s
-        url: https://github.com/analisedefiis/analisedefiis.git
-        secretRef:
-          name: flux-git-auth
-        ref:
-          branch: main
-
-- name: Create Kustomization for youread repo
+- name: Create Kustomization for each app repo
   kubernetes.core.k8s:
     state: present
     definition:
       apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
       kind: Kustomization
       metadata:
-        name: youread-app
+        name: "{{ item.name }}"
         namespace: flux-system
       spec:
-        interval: 5m0s
-        path: "./clusters/k3s"
+        interval: "{{ flux_kustomization_interval }}"
+        path: "{{ item.path }}"
         prune: true
         sourceRef:
           kind: GitRepository
-          name: youread
+          name: "{{ item.name }}"
         validation: client
-
-- name: Create Kustomization for analisedefiis repo
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
-      kind: Kustomization
-      metadata:
-        name: analisedefiis-app
-        namespace: flux-system
-      spec:
-        interval: 5m0s
-        path: "./clusters/k3s"
-        prune: true
-        sourceRef:
-          kind: GitRepository
-          name: analisedefiis
-        validation: client
-
-- name: Create GitRepository for example-self-hosted-saas-app
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: source.toolkit.fluxcd.io/v1beta2
-      kind: GitRepository
-      metadata:
-        name: example-self-hosted-saas-app
-        namespace: flux-system
-      spec:
-        interval: 1m0s
-        url: https://github.com/humansoftware/example_self_hosted_saas_app.git
-        secretRef:
-          name: flux-git-auth
-        ref:
-          branch: main
-
-- name: Create Kustomization for example-self-hosted-saas-app
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
-      kind: Kustomization
-      metadata:
-        name: example-self-hosted-saas-app
-        namespace: flux-system
-      spec:
-        interval: 5m0s
-        path: "./"  # update if manifests are inside a subfolder
-        prune: true
-        sourceRef:
-          kind: GitRepository
-          name: example-self-hosted-saas-app
-        validation: client
+  loop: "{{ flux_app_repos }}"

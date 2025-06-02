@@ -1,0 +1,53 @@
+- name: Add actions-runner-controller Helm repository
+  kubernetes.core.helm_repository:
+    name: actions-runner-controller
+    repo_url: https://actions-runner-controller.github.io/actions-runner-controller
+
+- name: Ensure actions-runner-system namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: actions-runner-system
+
+- name: Create GitHub token secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: controller-manager-gh-secret
+        namespace: actions-runner-system
+      stringData:
+        github_token: "{{ github_pat }}"
+
+- name: Install actions-runner-controller via Helm
+  kubernetes.core.helm:
+    name: actions-runner-controller
+    chart_ref: actions-runner-controller/actions-runner-controller
+    release_namespace: actions-runner-system
+    create_namespace: true
+    wait: true
+    values:
+      authSecret:
+        create: false
+        name: controller-manager-gh-secret
+      podLabels:
+        control-plane: controller-manager
+
+- name: Deploy GitHub Actions Runner for each app repo
+  ansible.builtin.template:
+    src: runnerdeployment.yaml.j2
+    dest: "/tmp/runnerdeployment_{{ item.name }}.yaml"
+    mode: '0644'
+  loop: "{{ flux_app_repos }}"
+  register: rendered_runner_deployments
+
+- name: Apply runner deployments
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ item.dest }}"
+  loop: "{{ rendered_runner_deployments.results }}"
