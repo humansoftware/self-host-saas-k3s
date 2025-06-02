@@ -1,172 +1,283 @@
-# K3s Cluster
+# K3s Guide
 
-This project uses K3s, a lightweight Kubernetes distribution, to provide a powerful container orchestration platform on a single server.
+This guide explains how to manage and maintain your K3s cluster in Self-Host SaaS K3s.
 
-## Installation Options
+## Cluster Management
 
-K3s is installed with the following options:
+### 1. Node Management
 
-```yaml
-k3s_extra_args: >
-  --disable traefik
-  --disable servicelb
-  --disable-cloud-controller
-  --disable-network-policy
-  --disable-helm-controller
-  --disable local-storage
-  --disable metrics-server
-  --disable coredns
-```
-
-These options are chosen to:
-- Minimize resource usage
-- Allow custom component installation
-- Provide flexibility in configuration
-- Enable better control over the cluster
-
-## Accessing the Cluster
-
-### Local Configuration
-
-After running the Ansible playbook, your local kubeconfig will be automatically configured. You can:
-
-1. Set the KUBECONFIG environment variable:
+1. Add a new node:
    ```bash
-   export KUBECONFIG=/path/to/kubeconfig
+   # On the new node
+   curl -sfL https://get.k3s.io | K3S_URL=https://server:6443 K3S_TOKEN=your-token sh -
    ```
 
-2. Use kubectl:
+2. Remove a node:
    ```bash
+   # On the node to remove
+   /usr/local/bin/k3s-uninstall.sh
+   
+   # On the server
+   kubectl delete node node-name
+   ```
+
+### 2. Cluster Operations
+
+1. Check cluster status:
+   ```bash
+   # Get node status
    kubectl get nodes
-   kubectl get pods -A
+   
+   # Get system pods
+   kubectl get pods -n kube-system
    ```
 
-### Remote Access
-
-For security, the Kubernetes API is not exposed directly. To access it remotely:
-
-1. Set up an SSH tunnel:
+2. Update K3s:
    ```bash
-   ssh -N -L 6443:localhost:6443 ubuntu@YOUR_PUBLIC_IP &
+   # Update K3s
+   curl -sfL https://get.k3s.io | sh -
    ```
 
-2. Configure your local kubeconfig to use the tunnel:
+## System Components
+
+### 1. Traefik Ingress
+
+1. Configure Traefik:
+   ```yaml
+   apiVersion: helm.cattle.io/v1
+   kind: HelmChartConfig
+   metadata:
+     name: traefik
+     namespace: kube-system
+   spec:
+     valuesContent: |-
+       metrics:
+         prometheus:
+           enabled: true
+       ports:
+         web:
+           redirectTo: websecure
+         websecure:
+           tls:
+             enabled: true
+   ```
+
+2. Create Ingress:
+   ```yaml
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+     name: your-app
+     annotations:
+       kubernetes.io/ingress.class: traefik
+   spec:
+     rules:
+     - host: your-app.your-domain.com
+       http:
+         paths:
+         - path: /
+           pathType: Prefix
+           backend:
+             service:
+               name: your-app
+               port:
+                 number: 80
+   ```
+
+### 2. Local Storage
+
+1. Configure Longhorn:
+   ```yaml
+   apiVersion: longhorn.io/v1beta1
+   kind: Setting
+   metadata:
+     name: default-replica-count
+   spec:
+     value: "3"
+   ```
+
+2. Create StorageClass:
+   ```yaml
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: longhorn
+   provisioner: driver.longhorn.io
+   allowVolumeExpansion: true
+   parameters:
+     numberOfReplicas: "3"
+     staleReplicaTimeout: "30"
+   ```
+
+## Security
+
+### 1. Network Policies
+
+1. Create network policy:
+   ```yaml
+   apiVersion: networking.k8s.io/v1
+   kind: NetworkPolicy
+   metadata:
+     name: default-deny
+   spec:
+     podSelector: {}
+     policyTypes:
+     - Ingress
+     - Egress
+   ```
+
+2. Allow specific traffic:
+   ```yaml
+   apiVersion: networking.k8s.io/v1
+   kind: NetworkPolicy
+   metadata:
+     name: allow-app
+   spec:
+     podSelector:
+       matchLabels:
+         app: your-app
+     ingress:
+     - from:
+       - podSelector:
+           matchLabels:
+             app: allowed-app
+       ports:
+       - protocol: TCP
+         port: 80
+   ```
+
+### 2. RBAC
+
+1. Create ServiceAccount:
    ```yaml
    apiVersion: v1
-   kind: Config
-   clusters:
-   - cluster:
-       server: https://localhost:6443
-       certificate-authority-data: <your-ca-data>
-     name: k3s
+   kind: ServiceAccount
+   metadata:
+     name: your-app
    ```
 
-## Cluster Components
+2. Create Role:
+   ```yaml
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: Role
+   metadata:
+     name: your-app
+   rules:
+   - apiGroups: [""]
+     resources: ["pods"]
+     verbs: ["get", "list", "watch"]
+   ```
 
-### Core Components
+3. Create RoleBinding:
+   ```yaml
+   apiVersion: rbac.authorization.k8s.io/v1
+   kind: RoleBinding
+   metadata:
+     name: your-app
+   subjects:
+   - kind: ServiceAccount
+     name: your-app
+   roleRef:
+     kind: Role
+     name: your-app
+     apiGroup: rbac.authorization.k8s.io
+   ```
 
-- **etcd**: Distributed key-value store
-- **kube-apiserver**: Kubernetes API server
-- **kube-controller-manager**: Controller manager
-- **kube-scheduler**: Pod scheduler
-- **kubelet**: Node agent
+## Maintenance
 
-### Optional Components
+### 1. System Updates
 
-The following components are installed separately:
-- Traefik (Ingress controller)
-- Longhorn (Storage)
-- Harbor (Container registry)
-- Cert-Manager (TLS certificates)
+1. Update system packages:
+   ```bash
+   # On each node
+   sudo apt update
+   sudo apt upgrade
+   ```
 
-## Resource Management
+2. Update K3s:
+   ```bash
+   # On the server
+   curl -sfL https://get.k3s.io | sh -
+   ```
 
-### Node Resources
+### 2. Resource Management
 
-Monitor node resources:
-```bash
-kubectl top nodes
-kubectl describe nodes
-```
+1. Monitor resources:
+   ```bash
+   # Check node resources
+   kubectl top nodes
+   
+   # Check pod resources
+   kubectl top pods -A
+   ```
 
-### Pod Resources
-
-Set resource limits in your deployments:
-```yaml
-resources:
-  requests:
-    memory: "64Mi"
-    cpu: "250m"
-  limits:
-    memory: "128Mi"
-    cpu: "500m"
-```
-
-## Configuration
-
-### K3s Options
-
-Configure K3s in `group_vars/all/variables.yml`:
-
-```yaml
-k3s_version: "v1.28.0+k3s1"
-k3s_install_path: "/usr/local/bin"
-k3s_config_path: "/etc/rancher/k3s"
-```
-
-### Custom Components
-
-Add custom components by creating manifests in `roles/install_k8s_apps/templates/`:
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: my-app
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-  namespace: my-app
-spec:
-  # ... deployment spec
-```
+2. Clean up resources:
+   ```bash
+   # Remove completed jobs
+   kubectl delete jobs --field-selector status.successful=1
+   
+   # Remove old deployments
+   kubectl delete deployment old-deployment
+   ```
 
 ## Troubleshooting
 
-### Common Issues
+### 1. Common Issues
 
-1. **Node Not Ready**
-   - Check kubelet logs: `journalctl -u kubelet`
-   - Verify system resources
-   - Check network connectivity
+1. **Node not ready**
+   - Check node status: `kubectl describe node node-name`
+   - Check system logs: `journalctl -u k3s`
+   - Verify network connectivity
 
-2. **Pod Scheduling Issues**
-   - Check node resources: `kubectl describe nodes`
-   - Verify pod resource requests
-   - Check node taints and tolerations
+2. **Pod issues**
+   - Check pod status: `kubectl describe pod pod-name`
+   - Check pod logs: `kubectl logs pod-name`
+   - Verify resource limits
 
-3. **API Server Issues**
-   - Check API server logs: `journalctl -u k3s`
-   - Verify etcd health
-   - Check certificate validity
+3. **Network issues**
+   - Check Traefik logs: `kubectl logs -n kube-system -l app.kubernetes.io/name=traefik`
+   - Verify network policies
+   - Check DNS configuration
 
-### Debugging
+### 2. Debugging
 
-Enable debug logging:
-```bash
-k3s server --debug
-```
+1. Check system logs:
+   ```bash
+   # K3s logs
+   journalctl -u k3s
+   
+   # Container logs
+   kubectl logs -n kube-system -l app.kubernetes.io/name=traefik
+   ```
 
-View component logs:
-```bash
-# K3s logs
-journalctl -u k3s
+2. Verify configuration:
+   ```bash
+   # Check K3s config
+   cat /etc/rancher/k3s/k3s.yaml
+   
+   # Check system pods
+   kubectl get pods -n kube-system
+   ```
 
-# Kubelet logs
-journalctl -u kubelet
+## Best Practices
 
-# Container logs
-kubectl logs -n kube-system -l component=kube-apiserver
-``` 
+1. **Cluster Management**
+   - Regular updates
+   - Resource monitoring
+   - Backup configuration
+
+2. **Security**
+   - Network policies
+   - RBAC configuration
+   - Regular security audits
+
+3. **Maintenance**
+   - Regular cleanup
+   - Resource optimization
+   - Documentation updates
+
+## Next Steps
+
+1. [Application deployment](applications.md)
+2. [Monitoring setup](monitoring.md)
+3. [Backup configuration](backups.md) 

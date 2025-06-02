@@ -1,25 +1,51 @@
-# Getting Started
+# Self-Host SaaS K3s
 
-Welcome to Self-Host SaaS K3s! This guide will help you get started with setting up your self-hosted SaaS platform.
+Welcome to the Self-Host SaaS K3s documentation. This project provides a complete solution for self-hosting your SaaS applications using K3s, a lightweight Kubernetes distribution.
 
-## Quick Start
+## Overview
 
-1. [Prerequisites](prerequisites.md) - Set up your environment
-2. [Installation](installation.md) - Run the Ansible playbook
-3. [First Steps](first-steps.md) - Verify your installation
+Self-Host SaaS K3s is designed to help you deploy and manage your SaaS applications on your own infrastructure. It provides:
 
-## Technology Stack
+- A lightweight Kubernetes cluster using K3s
+- Container registry with Harbor
+- Persistent storage with Longhorn
+- Automated backups to Backblaze
+- CI/CD integration with GitHub Actions
+- Monitoring and logging stack
+- Security-first approach
 
-- [K3s Cluster](k3s.md) - Kubernetes cluster configuration and management
-- [CI/CD](cicd.md) - GitHub Actions and Flux setup
-- [Container Registry](harbor.md) - Harbor registry configuration
-- [Storage](longhorn.md) - Longhorn storage and Backblaze backups
-- [Security](security.md) - Firewall and access configuration
+## Getting Started
 
-## Next Steps
+1. [Prerequisites](prerequisites.md) - System requirements and preparation
+2. [Installation](installation.md) - Step-by-step installation guide
+3. [Security](security.md) - Security configuration and best practices
 
-After installation, you can:
+## Core Components
 
-1. [Configure your applications](applications.md)
-2. [Set up monitoring](monitoring.md)
-3. [Manage backups](backups.md)
+1. [K3s](k3s.md) - Managing your K3s cluster
+2. [Harbor](harbor.md) - Container registry setup and usage
+3. [Longhorn](longhorn.md) - Storage and backup management
+
+## Application Management
+
+1. [Applications](applications.md) - Deploying and managing applications
+2. [Monitoring](monitoring.md) - Setting up monitoring and alerts
+3. [Backups](backups.md) - Backup and restore procedures
+
+## Additional Resources
+
+- [GitHub Repository](https://github.com/humansoftware/self-host-saas-k3s)
+- [Issue Tracker](https://github.com/humansoftware/self-host-saas-k3s/issues)
+- [Contributing Guide](CONTRIBUTING.md)
+
+## Support
+
+If you need help or have questions:
+
+1. Check the [documentation](https://humansoftware.github.io/self-host-saas-k3s/)
+2. Open an [issue](https://github.com/humansoftware/self-host-saas-k3s/issues)
+3. Join our [community](https://github.com/humansoftware/self-host-saas-k3s/discussions)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
