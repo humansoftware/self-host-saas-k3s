@@ -4,5 +4,14 @@ theme:
   name: material
 nav:
   - Home: index.md
-  - Usage: usage.md
-  - Configuration: configuration.md
+  - Getting Started:
+      - Prerequisites: prerequisites.md
+      - Installation: installation.md
+      - Security: security.md
+  - Core Components:
+      - K3s: k3s.md
+      - Harbor: harbor.md
+      - Longhorn: longhorn.md
+  - Application Management:
+      - Applications: applications.md
+      - Monitoring: monitoring.md
