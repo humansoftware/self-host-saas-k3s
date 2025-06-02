@@ -1,0 +1,8 @@
+site_name: Self-Host SaaS K3s
+repo_url: https://github.com/humansoftware/self-host-saas-k3s
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Usage: usage.md
+  - Configuration: configuration.md
