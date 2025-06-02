@@ -4,29 +4,10 @@
     state: present
     update_cache: true
 
-- name: Warn if ddns_domain_allowed_ssh is not set (SSH will be open to anyone!)
-  ansible.builtin.debug:
-    msg: |
-      #############################################################
-      #  WARNING: SSH is open to ANYONE!                         #
-      #  This is INSECURE.                                       #
-      #  Set ddns_domain_allowed_ssh to restrict SSH access.      #
-      #  Consider using a Dynamic DNS service.                   #
-      #############################################################
-    warn: true
-  when: ddns_domain_allowed_ssh is not defined
-
-- name: Resolve DDNS domain to IP
-  ansible.builtin.set_fact:
-    resolved_ssh_ip: "{{ lookup('ansible.builtin.dig', ddns_domain_allowed_ssh) }}"
-  when: ddns_domain_allowed_ssh is defined
-
-- name: Allow SSH from resolved IP
+- name: Allow SSH from localhost
   community.general.ufw:
     rule: allow
     port: 22
-    from_ip: "{{ resolved_ssh_ip }}"
-  when: ddns_domain_allowed_ssh is defined
 
 - name: Allow HTTP
   community.general.ufw:
