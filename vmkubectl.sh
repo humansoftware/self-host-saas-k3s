@@ -41,7 +41,7 @@ multipass exec "$VM_NAME" -- sudo cat /etc/rancher/k3s/k3s.yaml >"$KUBECONFIG_PA
 # sed -i "s|server: https://.*:6443|server: https://localhost:6443|g" "$KUBECONFIG_PATH"
 
 # Start SSH tunnel in background (if not already running)
-if ! pgrep -f "ssh -N -L 6443:localhost:6443 ubuntu@${VM_IP}" >/dev/null; then
+if ! pgrep -f "ssh -N -L 6443:localhost:6443 -p 2222 ubuntu@${VM_IP}" >/dev/null; then
     ssh -N -L 6443:localhost:6443 ubuntu@"$VM_IP" &
     TUNNEL_PID=$!
     echo "Started SSH tunnel with PID $TUNNEL_PID"
@@ -49,7 +49,7 @@ if ! pgrep -f "ssh -N -L 6443:localhost:6443 ubuntu@${VM_IP}" >/dev/null; then
     sleep 2
 else
     echo "SSH tunnel already running."
-    EXISTING_PID=$(pgrep -f "ssh -N -L 6443:localhost:6443 ubuntu@${VM_IP}" | head -n1)
+    EXISTING_PID=$(pgrep -f "ssh -N -L 6443:localhost:6443 -p 2222 ubuntu@${VM_IP}" | head -n1)
     echo "To kill the existing tunnel, run: kill $EXISTING_PID"
 fi
 

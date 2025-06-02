@@ -4,10 +4,37 @@
     state: present
     update_cache: true
 
-- name: Allow SSH from localhost
+- name: Ensure SSH public key is present for user 'ubuntu'
+  ansible.builtin.authorized_key:
+    user: ubuntu
+    state: present
+    key: "{{ lookup('file', '/path/to/your/public_key.pub') }}"
+
+- name: Disable SSH password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication '
+    line: 'PasswordAuthentication no'
+    state: present
+    backup: true
+
+- name: Change SSH port in sshd_config
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?Port '
+    line: "Port {{ ssh_port_rewritten | default(2222) }}"
+    state: present
+    backup: true
+
+- name: Allow new SSH port in UFW
   community.general.ufw:
     rule: allow
-    port: 22
+    port: "{{ ssh_port_rewritten | default(2222) }}"
+
+- name: Restart SSH service
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
 
 - name: Allow HTTP
   community.general.ufw:
