@@ -28,7 +28,7 @@ Self-Host SaaS K3s is designed to help you deploy and manage your SaaS applicati
 
 ## Application Management
 
-1. [Applications](applications.md) - Deploying and managing applications
+1. [Applications](applications.md) - CI/CD and managing applications
 2. [Monitoring](monitoring.md) - Setting up monitoring and alerts 
 
 ## Additional Resources

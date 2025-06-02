@@ -38,3 +38,13 @@ The firewall is managed using UFW and is configured with the following rules:
 - Only set `firewall_open_k3s_ports` to `true` if you need to access the Kubernetes API remotely, and consider restricting access by IP.
 
 For a full list of configurable secrets, see [group_vars/all/secrets.example.yml](https://github.com/humansoftware/self-host-saas-k3s/blob/main/group_vars/all/secrets.example.yml).
+
+## SSH tunnels
+
+For security reasons, most UIs and services in the cluster are not directly exposed to the internet. Instead, they are accessed through SSH tunnels, which provide a secure way to access these services. This approach ensures that:
+
+1. Services are only accessible to authorized users with SSH access
+2. All traffic is encrypted through the SSH connection
+3. No additional ports need to be opened on the firewall
+
+For detailed instructions on setting up and automating SSH tunnels, including various methods like using `autossh`, systemd services, and SSH config, please refer to our [SSH Tunnel Guide](ssh-tunnel.md).

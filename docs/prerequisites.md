@@ -67,8 +67,3 @@ Before proceeding with installation, verify:
    ```bash
    ansible all -i inventory.yml -m shell -a "free -h && df -h && nproc"
    ```
-
-## Next Steps
-
-1. [Prepare your server](server-preparation.md) using cloud-init
-2. [Install Self-Host SaaS K3s](installation.md) 
