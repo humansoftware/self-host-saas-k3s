@@ -6,6 +6,7 @@
 
 - name: Check that the SSH public key exists on the control machine
   delegate_to: localhost
+  become: false
   ansible.builtin.stat:
     path: "{{ ssh_public_key_to_authorize_on_target }}"
   register: ssh_pubkey_stat
