@@ -5,10 +5,10 @@
     update_cache: true
 
 - name: Ensure SSH public key is present for user 'ubuntu'
-  ansible.builtin.authorized_key:
+  ansible.posix.authorized_key:
     user: ubuntu
     state: present
-    key: "{{ lookup('file', '/path/to/your/public_key.pub') }}"
+    key: "{{ lookup('file', '/home/ubuntu/.ssh/id_rsa.pub') }}"
 
 - name: Disable SSH password authentication
   ansible.builtin.lineinfile:
