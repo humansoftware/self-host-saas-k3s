@@ -2,291 +2,80 @@
 
 This guide explains how to deploy and manage applications in your Self-Host SaaS K3s cluster.
 
-## Application Deployment
+## Overview
 
-### 1. Using Harbor Registry
+The deployment and management of applications in this cluster follows a GitOps approach using Flux for Continuous Deployment (CD) and GitHub Actions for Continuous Integration (CI).
 
-1. Build and push your application:
-   ```bash
-   # Build the image
-   docker build -t harbor.your-domain.com/your-project/your-app:latest .
+## Example Application
 
-   # Login to Harbor
-   docker login harbor.your-domain.com
+For reference, you can check out the example application at:
+https://github.com/humansoftware/example_self_hosted_saas_app
 
-   # Push the image
-   docker push harbor.your-domain.com/your-project/your-app:latest
-   ```
 
-2. Create a deployment:
-   ```yaml
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: your-app
-   spec:
-     replicas: 1
-     selector:
-       matchLabels:
-         app: your-app
-     template:
-       metadata:
-         labels:
-           app: your-app
-       spec:
-         containers:
-         - name: your-app
-           image: harbor.your-domain.com/your-project/your-app:latest
-           ports:
-           - containerPort: 80
-   ```
+## Configuring your applications
 
-### 2. Using GitHub Actions
+To deploy applications to your cluster, you need to configure them in the cluster's configuration:
 
-1. Configure workflow:
-   ```yaml
-   name: Deploy Application
-   on:
-     push:
-       branches: [ main ]
-   
-   jobs:
-     deploy:
-       runs-on: ubuntu-latest
-       steps:
-       - uses: actions/checkout@v2
-       
-       - name: Build and Push
-         uses: docker/build-push-action@v2
-         with:
-           push: true
-           tags: ${{ secrets.REGISTRY_URL }}/your-app:latest
-       
-       - name: Deploy to K3s
-         uses: azure/k8s-deploy@v1
-         with:
-           manifests: |
-             k8s/deployment.yaml
-           images: |
-             ${{ secrets.REGISTRY_URL }}/your-app:latest
-   ```
+1. Edit the file `group_vars/all/secrets.yml` to specify which applications to deploy
+2. Add your application repositories to the `flux_app_repos` list
+3. Each repository should be specified in the format: `owner/repo-name`
 
-## Persistent Storage
+For an example configuration, see [secrets.example.yml](..https://github.com/humansoftware/self-host-saas-k3s/blob/main/group_vars/all/secrets.example.yml)
 
-### 1. Using Longhorn
+### GitHub Authentication
 
-1. Create a PersistentVolumeClaim:
-   ```yaml
-   apiVersion: v1
-   kind: PersistentVolumeClaim
-   metadata:
-     name: your-app-data
-   spec:
-     accessModes:
-       - ReadWriteOnce
-     storageClassName: longhorn
-     resources:
-       requests:
-         storage: 10Gi
-   ```
+The cluster needs access to your GitHub repositories for two purposes:
+1. Flux needs to clone repositories to deploy applications
+2. GitHub Actions need to interact with GitHub's API
 
-2. Mount in deployment:
-   ```yaml
-   spec:
-     containers:
-     - name: your-app
-       volumeMounts:
-       - name: data
-         mountPath: /data
-     volumes:
-     - name: data
-       persistentVolumeClaim:
-         claimName: your-app-data
-   ```
+To enable this access:
+1. Create a GitHub Personal Access Token (PAT) with appropriate permissions:
+   - `repo` scope for private repositories
+   - `workflow` scope for GitHub Actions
+2. Add this token to the `github_pat` field in `group_vars/all/secrets.yml`
 
-## Ingress Configuration
+The token will be securely stored and used by both Flux and GitHub Actions runners.
 
-### 1. Using Traefik
+## Application Structure
 
-1. Create Ingress resource:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: Ingress
-   metadata:
-     name: your-app
-     annotations:
-       kubernetes.io/ingress.class: traefik
-   spec:
-     rules:
-     - host: your-app.your-domain.com
-       http:
-         paths:
-         - path: /
-           pathType: Prefix
-           backend:
-             service:
-               name: your-app
-               port:
-                 number: 80
-   ```
+### Kubernetes Configuration
+- Applications must include Kubernetes Custom Resource Definitions (CRDs) in the `flux` folder
+- These configurations define your application's components:
+  - Jobs
+  - Services
+  - Pods
+  - Other Kubernetes resources
+- The configurations can reference Docker images published by your CI pipelines
 
-### 2. TLS Configuration
+### Kustomize Integration
+- Flux uses Kustomize for managing Kubernetes configurations
+- Each application should include a `kustomization.yaml` file that:
+  - References the Kubernetes manifests
+  - Defines common labels and annotations
+  - Manages environment-specific configurations
+- For more information about Kustomize, see the [official documentation](https://kustomize.io/)
+- To learn how Flux integrates with Kustomize, refer to the [Flux Kustomize documentation](https://fluxcd.io/flux/components/kustomize/)
 
-1. Create TLS secret:
-   ```bash
-   kubectl create secret tls your-app-tls \
-     --cert=path/to/cert.pem \
-     --key=path/to/key.pem
-   ```
+### Continuous Integration (CI)
+- GitHub Actions is used for CI
+- Actions are defined in your application repository as you would normally do in GitHub
+- Key differences from standard GitHub Actions:
+  - Actions run in your self-hosted cluster instead of GitHub runners
+  - Pull request statuses and logs are updated the same way as with native GitHub runners
 
-2. Add TLS to Ingress:
-   ```yaml
-   spec:
-     tls:
-     - hosts:
-       - your-app.your-domain.com
-       secretName: your-app-tls
-   ```
+### Docker Image Publishing
 
-## Application Management
+To publish Docker images to Harbor:
 
-### 1. Scaling
-
-1. Manual scaling:
-   ```bash
-   kubectl scale deployment your-app --replicas=3
-   ```
-
-2. Auto-scaling:
-   ```yaml
-   apiVersion: autoscaling/v2
-   kind: HorizontalPodAutoscaler
-   metadata:
-     name: your-app
-   spec:
-     scaleTargetRef:
-       apiVersion: apps/v1
-       kind: Deployment
-       name: your-app
-     minReplicas: 1
-     maxReplicas: 10
-     metrics:
-     - type: Resource
-       resource:
-         name: cpu
-         target:
-           type: Utilization
-           averageUtilization: 80
-   ```
-
-### 2. Updates
-
-1. Rolling updates:
-   ```bash
-   kubectl set image deployment/your-app your-app=harbor.your-domain.com/your-project/your-app:new-version
-   ```
-
-2. Rollback:
-   ```bash
-   kubectl rollout undo deployment/your-app
-   ```
-
-## Monitoring
-
-### 1. Resource Usage
-
-1. Check pod status:
-   ```bash
-   kubectl get pods
-   kubectl describe pod your-app-pod
-   ```
-
-2. Monitor resources:
-   ```bash
-   kubectl top pods
-   kubectl top nodes
-   ```
-
-### 2. Logs
-
-1. View logs:
-   ```bash
-   kubectl logs -f deployment/your-app
-   ```
-
-2. Previous container logs:
-   ```bash
-   kubectl logs -f deployment/your-app --previous
-   ```
-
-## Backup and Restore
-
-### 1. Application Data
-
-1. Backup PVC:
-   ```bash
-   # Create backup
-   kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80
-   # Use Longhorn UI to create backup
-   ```
-
-2. Restore from backup:
-   ```bash
-   # Use Longhorn UI to restore
-   # Or use kubectl
-   kubectl create -f restore.yaml
-   ```
-
-## Troubleshooting
-
-### 1. Common Issues
-
-1. **Pod not starting**
-   - Check events: `kubectl describe pod your-app-pod`
-   - Check logs: `kubectl logs your-app-pod`
-   - Verify image: `kubectl get pod your-app-pod -o yaml`
-
-2. **Storage issues**
-   - Check PVC status: `kubectl get pvc`
-   - Verify Longhorn volumes: `kubectl get volumes -n longhorn-system`
-   - Check storage class: `kubectl get storageclass`
-
-3. **Ingress issues**
-   - Check ingress status: `kubectl get ingress`
-   - Verify service: `kubectl get svc`
-   - Check Traefik logs: `kubectl logs -n kube-system -l app.kubernetes.io/name=traefik`
-
-### 2. Debugging Tools
-
-1. **kubectl debug**
-   ```bash
-   kubectl debug -it your-app-pod --image=busybox
-   ```
-
-2. **Port forwarding**
-   ```bash
-   kubectl port-forward svc/your-app 8080:80
-   ```
+1. Set up a GitHub secret for your application containing the Harbor admin password
+   - This password should match what you configured in the secrets configuration
+2. Use the following credentials for Docker login:
+   - Username: `admin`
+   - Password: The Harbor admin password secret you configured
 
 ## Best Practices
 
-1. **Resource Management**
-   - Set resource requests and limits
-   - Use horizontal pod autoscaling
-   - Monitor resource usage
-
-2. **Security**
-   - Use network policies
-   - Implement pod security policies
-   - Regular security updates
-
-3. **Backup Strategy**
-   - Regular volume backups
-   - Test restore procedures
-   - Document recovery steps
-
-## Next Steps
-
-1. [Set up monitoring](monitoring.md)
-2. [Configure backups](backups.md)
-3. [Security hardening](security.md) 
+1. Keep your Kubernetes configurations in the `flux` folder organized and well-documented
+2. Ensure your GitHub Actions workflows are properly configured for self-hosted runners
+3. Securely manage your Harbor credentials using GitHub secrets
+4. Follow the example application structure for consistency

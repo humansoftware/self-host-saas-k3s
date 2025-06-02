@@ -29,22 +29,14 @@ Self-Host SaaS K3s is designed to help you deploy and manage your SaaS applicati
 ## Application Management
 
 1. [Applications](applications.md) - Deploying and managing applications
-2. [Monitoring](monitoring.md) - Setting up monitoring and alerts
-3. [Backups](backups.md) - Backup and restore procedures
+2. [Monitoring](monitoring.md) - Setting up monitoring and alerts 
 
 ## Additional Resources
 
 - [GitHub Repository](https://github.com/humansoftware/self-host-saas-k3s)
-- [Issue Tracker](https://github.com/humansoftware/self-host-saas-k3s/issues)
-- [Contributing Guide](CONTRIBUTING.md)
+- [Issue Tracker](https://github.com/humansoftware/self-host-saas-k3s/issues) 
+- [Contributing Guide](https://github.com/humansoftware/self-host-saas-k3s/blob/main/CONTRIBUTING.md)
 
-## Support
-
-If you need help or have questions:
-
-1. Check the [documentation](https://humansoftware.github.io/self-host-saas-k3s/)
-2. Open an [issue](https://github.com/humansoftware/self-host-saas-k3s/issues)
-3. Join our [community](https://github.com/humansoftware/self-host-saas-k3s/discussions)
 
 ## License
 

@@ -6,93 +6,38 @@ Longhorn provides persistent storage for your Kubernetes cluster with backup cap
 
 ### Backblaze Setup
 
+Back blaze is a cheap distributed file system storage solution, compatible with S3. It's used for backups for DBs, container registry and anything that needed to be backed up, really. 
+
+You must configure longhorn to use your backblaze bucket as backup.
+
 1. Create a Backblaze account and bucket:
-   - Sign up at [Backblaze](https://www.backblaze.com)
-   - Create a new bucket
-   - Generate application keys
+
+- Sign up at [Backblaze](https://www.backblaze.com)
+- Create a new private bucket
+- Generate application key with write access
 
 2. Configure Backblaze credentials in `group_vars/all/secrets.yml`:
-   ```yaml
-   backblaze_key_id: "your-backblaze-key-id"
-   backblaze_application_key: "your-backblaze-application-key"
-   backblaze_bucket: "your-backblaze-bucket"
-   ```
 
-### Longhorn Configuration
-
-Configure Longhorn in `group_vars/all/variables.yml`:
 ```yaml
-longhorn_helm_values:
-  persistence:
-    defaultClass: true
-  defaultSettings:
-    backupTarget: s3://your-backblaze-bucket
-    backupTargetCredentialSecret: backblaze-secret
-  backupstore:
-    pollInterval: 300
+backblaze_key_id: "your-backblaze-key-id"
+backblaze_application_key: "your-backblaze-application-key"
+backblaze_bucket: "your-backblaze-bucket"
+backblaze_region: "your-region"
 ```
 
-## Using Longhorn
-
-### Creating Persistent Volumes
-
-1. Create a PVC:
-   ```yaml
-   apiVersion: v1
-   kind: PersistentVolumeClaim
-   metadata:
-     name: my-pvc
-   spec:
-     accessModes:
-       - ReadWriteOnce
-     storageClassName: longhorn
-     resources:
-       requests:
-         storage: 1Gi
-   ```
-
-2. Use in a pod:
-   ```yaml
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: my-pod
-   spec:
-     containers:
-     - name: my-container
-       image: nginx
-       volumeMounts:
-       - name: my-volume
-         mountPath: /data
-     volumes:
-     - name: my-volume
-       persistentVolumeClaim:
-         claimName: my-pvc
-   ```
+See [Example secrets file](https://github.com/humansoftware/self-host-saas-k3s/blob/main/group_vars/all/secrets.example.yml) for details.
 
 ### Managing Backups
 
-1. Create a backup:
-   ```bash
-   kubectl -n longhorn-system exec -it <longhorn-manager-pod> -- longhorn backup create --volume <volume-name>
-   ```
-
-2. List backups:
-   ```bash
-   kubectl -n longhorn-system exec -it <longhorn-manager-pod> -- longhorn backup ls
-   ```
-
-3. Restore from backup:
-   ```bash
-   kubectl -n longhorn-system exec -it <longhorn-manager-pod> -- longhorn backup restore <backup-name>
-   ```
+The ansible scripts will automatically configure automatic weekly backups for you, see the corresponding section in [longhorn role](https://github.com/humansoftware/self-host-saas-k3s/blob/main/roles/longhorn/tasks/main.yml) for details.
 
 ## Accessing the UI
 
 1. Set up port forwarding:
-   ```bash
-   kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80
-   ```
+
+```bash
+kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80
+```
 
 2. Access the UI at [http://localhost:8080](http://localhost:8080)
 
@@ -112,32 +57,12 @@ longhorn_helm_values:
    - Go to Settings > Backup
    - Set backup interval
    - Configure retention policy
-
-2. Or use Kubernetes CronJob:
-   ```yaml
-   apiVersion: batch/v1
-   kind: CronJob
-   metadata:
-     name: longhorn-backup
-   spec:
-     schedule: "0 0 * * *"
-     jobTemplate:
-       spec:
-         template:
-           spec:
-             containers:
-             - name: backup
-               image: longhornio/longhorn-manager
-               command: ["longhorn", "backup", "create"]
-               args: ["--volume", "my-volume"]
-   ```
+ 
 
 ### Backup Verification
 
 1. Check backup status:
-   ```bash
-   kubectl -n longhorn-system exec -it <longhorn-manager-pod> -- longhorn backup ls
-   ```
+   - By using the UI, as explained above
 
 2. Verify backup in Backblaze:
    - Log in to Backblaze
@@ -156,28 +81,4 @@ longhorn_helm_values:
      kubectl logs -n longhorn-system -l app=longhorn-manager
      ```
 
-2. **Volume Issues**
-   - Check volume status:
-     ```bash
-     kubectl get pv
-     kubectl get pvc
-     ```
-   - Check Longhorn UI for details
-   - Verify node resources
-
-3. **Performance Issues**
-   - Monitor volume metrics in UI
-   - Check node resources
-   - Adjust volume settings
-
-### Maintenance
-
-1. Regular checks:
-   - Monitor backup success
-   - Check volume health
-   - Review storage usage
-
-2. Cleanup:
-   - Remove old backups
-   - Delete unused volumes
-   - Clean up snapshots 
+If you fill variables right, backups should be all automatically configured for you, it should be plug and play.      

@@ -18,10 +18,23 @@ All of this without the complexity of managing multiple services or worrying abo
 
 While running Kubernetes on a single node might seem like overkill, I chose K3s for several important reasons:
 
-1. **Development Velocity**: K3s provides all the services and tools we're used to in cloud environments, making development cycles faster and more efficient.
-2. **Flexibility**: The setup allows hosting multiple projects with different requirements on the same server with minimal effort.
-3. **Future-Proof**: If you need to scale later, the transition to a multi-node cluster is much simpler.
-4. **Cost-Effective**: You get all the benefits of a cloud-like environment at a fraction of the cost.
+1. **Infrastructure as Code**: K3s leverages Kubernetes' well-documented standards for defining infrastructure through Custom Resource Definitions (CRDs) and Helm charts. This means you can:
+   - Define your entire infrastructure in YAML files
+   - Version control your infrastructure
+   - Automate deployments and updates
+   - Maintain consistent environments
+
+2. **Development Velocity**: K3s provides all the services and tools we're used to in cloud environments, making development cycles faster and more efficient.
+
+3. **Flexibility**: The setup allows hosting multiple projects with different requirements on the same server with minimal effort, including:
+   - Web applications and APIs
+   - Background jobs and cron tasks
+   - Data pipelines and processing
+   - Web crawlers and scrapers
+
+4. **Future-Proof**: If you need to scale later, the transition to a multi-node cluster is much simpler.
+
+5. **Cost-Effective**: You get all the benefits of a cloud-like environment at a fraction of the cost.
 
 ## Documentation
 

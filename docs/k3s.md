@@ -1,283 +1,96 @@
-# K3s Guide
+# K3s
 
-This guide explains how to manage and maintain your K3s cluster in Self-Host SaaS K3s.
+[K3s](https://k3s.io/) is a lightweight, certified Kubernetes distribution designed for production workloads in resource-constrained environments and edge locations. It is easy to install, simple to operate, and optimized for both development and production use cases.
 
-## Cluster Management
+## Why K3s?
 
-### 1. Node Management
+- **Lightweight:** Minimal resource requirements compared to standard Kubernetes.
+- **Simplicity:** Single binary, easy upgrades, and reduced operational overhead.
+- **Production Ready:** CNCF certified, supports all standard Kubernetes APIs.
+- **Great for Edge/IoT:** Designed for environments where resources are limited.
 
-1. Add a new node:
-   ```bash
-   # On the new node
-   curl -sfL https://get.k3s.io | K3S_URL=https://server:6443 K3S_TOKEN=your-token sh -
-   ```
+## K3s Installation Options
 
-2. Remove a node:
-   ```bash
-   # On the node to remove
-   /usr/local/bin/k3s-uninstall.sh
-   
-   # On the server
-   kubectl delete node node-name
-   ```
+The K3s installation in this project uses specific options to fit the deployment requirements:
 
-### 2. Cluster Operations
+- **Docker Registry Integration:** Docker is used as a local registry to store and distribute container images within the cluster.
+- **Traefik as Ingress Controller:** Traefik is enabled by default to manage ingress resources.
+- **Automatic TLS with Cert-Manager:** Cert-Manager is installed to automate TLS certificate management using Let's Encrypt.
 
-1. Check cluster status:
-   ```bash
-   # Get node status
-   kubectl get nodes
-   
-   # Get system pods
-   kubectl get pods -n kube-system
-   ```
+You can review or customize these options in the Ansible role variables and installation scripts.  
 
-2. Update K3s:
-   ```bash
-   # Update K3s
-   curl -sfL https://get.k3s.io | sh -
-   ```
+## Variables to Customize in the K3s Role
 
-## System Components
+The following variables can be customized for the K3s role. These are typically set in your Ansible group or host variables:
 
-### 1. Traefik Ingress
+| Variable               | Description                                      | Example Value                                |
+| ---------------------- | ------------------------------------------------ | -------------------------------------------- |
+| `k3s_token`            | Cluster join token for K3s nodes                 | `"REPLACE_WITH_YOUR_K3S_TOKEN"`              |
+| `k3s_local_kubeconfig` | Path to local kubeconfig file                    | `"{{ lookup('env', 'HOME') }}/.kube/config"` |
+| `letsencrypt_email`    | Email for Let's Encrypt certificate registration | `"your@email.com"`                           |
 
-1. Configure Traefik:
-   ```yaml
-   apiVersion: helm.cattle.io/v1
-   kind: HelmChartConfig
-   metadata:
-     name: traefik
-     namespace: kube-system
-   spec:
-     valuesContent: |-
-       metrics:
-         prometheus:
-           enabled: true
-       ports:
-         web:
-           redirectTo: websecure
-         websecure:
-           tls:
-             enabled: true
-   ```
+See [group_vars/all/secrets.example.yml](https://github.com/humansoftware/self-host-saas-k3s/blob/main/group_vars/all/secrets.example.yml) for a full list of secrets and example values.
 
-2. Create Ingress:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: Ingress
-   metadata:
-     name: your-app
-     annotations:
-       kubernetes.io/ingress.class: traefik
-   spec:
-     rules:
-     - host: your-app.your-domain.com
-       http:
-         paths:
-         - path: /
-           pathType: Prefix
-           backend:
-             service:
-               name: your-app
-               port:
-                 number: 80
-   ```
+## How to Verify K3s Installation
 
-### 2. Local Storage
+After running the Ansible playbook, verify your K3s installation:
 
-1. Configure Longhorn:
-   ```yaml
-   apiVersion: longhorn.io/v1beta1
-   kind: Setting
-   metadata:
-     name: default-replica-count
-   spec:
-     value: "3"
-   ```
+1. **Check Node Status:**
+```sh
+kubectl get nodes
+```
 
-2. Create StorageClass:
-   ```yaml
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: longhorn
-   provisioner: driver.longhorn.io
-   allowVolumeExpansion: true
-   parameters:
-     numberOfReplicas: "3"
-     staleReplicaTimeout: "30"
-   ```
+2. **List All resources in All Namespaces:**
+```sh
+kubectl get all --all-namespaces
+```
 
-## Security
+3. **Inspect Cluster Info:**
+```sh
+kubectl cluster-info
+```
 
-### 1. Network Policies
+## Cert-Manager
 
-1. Create network policy:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: default-deny
-   spec:
-     podSelector: {}
-     policyTypes:
-     - Ingress
-     - Egress
-   ```
+[Cert-Manager](https://cert-manager.io/) is used to automate the management and issuance of TLS certificates in your cluster.
 
-2. Allow specific traffic:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: allow-app
-   spec:
-     podSelector:
-       matchLabels:
-         app: your-app
-     ingress:
-     - from:
-       - podSelector:
-           matchLabels:
-             app: allowed-app
-       ports:
-       - protocol: TCP
-         port: 80
-   ```
+- **Check Cert-Manager Status:**
+```sh
+kubectl get pods -n cert-manager
+```
 
-### 2. RBAC
+- **List Issuers and Certificates:**
+```sh
+kubectl get issuers,clusterissuers -A
+kubectl get certificates -A
+```
 
-1. Create ServiceAccount:
-   ```yaml
-   apiVersion: v1
-   kind: ServiceAccount
-   metadata:
-     name: your-app
-   ```
+## Ingress Controller
 
-2. Create Role:
-   ```yaml
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: Role
-   metadata:
-     name: your-app
-   rules:
-   - apiGroups: [""]
-     resources: ["pods"]
-     verbs: ["get", "list", "watch"]
-   ```
+Traefik is the default ingress controller bundled with K3s. It automatically manages ingress resources and routes external traffic to your services.
 
-3. Create RoleBinding:
-   ```yaml
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: RoleBinding
-   metadata:
-     name: your-app
-   subjects:
-   - kind: ServiceAccount
-     name: your-app
-   roleRef:
-     kind: Role
-     name: your-app
-     apiGroup: rbac.authorization.k8s.io
-   ```
+- **Check Traefik Pods:**
+```sh
+kubectl get pods -n kube-system -l app.kubernetes.io/name=traefik
+```
 
-## Maintenance
+- **List Ingress Resources:**
+```sh
+kubectl get ingress --all-namespaces
+``` 
 
-### 1. System Updates
+- **Check Ingress Controller Pods:**
+```sh
+kubectl get pods -n ingress-nginx
+```
 
-1. Update system packages:
-   ```bash
-   # On each node
-   sudo apt update
-   sudo apt upgrade
-   ```
+- **List Ingress Resources:**
+```sh
+kubectl get ingress --all-namespaces
+```
 
-2. Update K3s:
-   ```bash
-   # On the server
-   curl -sfL https://get.k3s.io | sh -
-   ```
+## Additional Resources
 
-### 2. Resource Management
-
-1. Monitor resources:
-   ```bash
-   # Check node resources
-   kubectl top nodes
-   
-   # Check pod resources
-   kubectl top pods -A
-   ```
-
-2. Clean up resources:
-   ```bash
-   # Remove completed jobs
-   kubectl delete jobs --field-selector status.successful=1
-   
-   # Remove old deployments
-   kubectl delete deployment old-deployment
-   ```
-
-## Troubleshooting
-
-### 1. Common Issues
-
-1. **Node not ready**
-   - Check node status: `kubectl describe node node-name`
-   - Check system logs: `journalctl -u k3s`
-   - Verify network connectivity
-
-2. **Pod issues**
-   - Check pod status: `kubectl describe pod pod-name`
-   - Check pod logs: `kubectl logs pod-name`
-   - Verify resource limits
-
-3. **Network issues**
-   - Check Traefik logs: `kubectl logs -n kube-system -l app.kubernetes.io/name=traefik`
-   - Verify network policies
-   - Check DNS configuration
-
-### 2. Debugging
-
-1. Check system logs:
-   ```bash
-   # K3s logs
-   journalctl -u k3s
-   
-   # Container logs
-   kubectl logs -n kube-system -l app.kubernetes.io/name=traefik
-   ```
-
-2. Verify configuration:
-   ```bash
-   # Check K3s config
-   cat /etc/rancher/k3s/k3s.yaml
-   
-   # Check system pods
-   kubectl get pods -n kube-system
-   ```
-
-## Best Practices
-
-1. **Cluster Management**
-   - Regular updates
-   - Resource monitoring
-   - Backup configuration
-
-2. **Security**
-   - Network policies
-   - RBAC configuration
-   - Regular security audits
-
-3. **Maintenance**
-   - Regular cleanup
-   - Resource optimization
-   - Documentation updates
-
-## Next Steps
-
-1. [Application deployment](applications.md)
-2. [Monitoring setup](monitoring.md)
-3. [Backup configuration](backups.md) 
+- [K3s Documentation](https://docs.k3s.io/)
+- [Cert-Manager Documentation](https://cert-manager.io/docs/)
+- [Kubernetes Ingress Docs](https://kubernetes.io/docs/concepts/services-networking/ingress/)
