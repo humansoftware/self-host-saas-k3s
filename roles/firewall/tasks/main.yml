@@ -31,14 +31,6 @@
     state: present
     backup: true
 
-- name: Change SSH port in sshd_config
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: '^#?Port '
-    line: "Port {{ ssh_port_rewritten | default(2222) }}"
-    state: present
-    backup: true
-
 - name: Allow new SSH port in UFW
   community.general.ufw:
     rule: allow

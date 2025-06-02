@@ -25,12 +25,12 @@ if [ "$RESTART" -eq 1 ]; then
     # Generate cloud-init.yaml with your public key
     envsubst <cloud-init.yaml >cloud-init.generated.yaml
     # Launch VM
-    multipass launch --name saas-server --cpus 2 --memory 4G --disk 25G 24.04 --cloud-init cloud-init.yaml
+    multipass launch --name saas-server --cpus 2 --memory 4G --disk 25G 24.04 --cloud-init cloud-init.generated.yaml
 
     # Inject your public SSH key into the VM for Ansible access
-    multipass exec saas-server -- mkdir -p /home/ubuntu/.ssh
-    multipass exec saas-server -- bash -c "echo '$(cat ~/.ssh/id_rsa.pub)' >> /home/ubuntu/.ssh/authorized_keys"
-    multipass exec saas-server -- chown ubuntu:ubuntu /home/ubuntu/.ssh/authorized_keys
+    # multipass exec saas-server -- mkdir -p /home/ubuntu/.ssh
+    # multipass exec saas-server -- bash -c "echo '$(cat ~/.ssh/id_rsa.pub)' >> /home/ubuntu/.ssh/authorized_keys"
+    # multipass exec saas-server -- chown ubuntu:ubuntu /home/ubuntu/.ssh/authorized_keys
 fi
 
 # Get IP
