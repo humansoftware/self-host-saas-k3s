@@ -37,6 +37,42 @@
   roles:
     - install_k8s_apps
 
+# - name: Trust Harbor CA in Docker
+#   hosts: all
+#   become: true
+#   tasks:
+#     - name: Get Harbor TLS secret from Kubernetes (delegated, per host)
+#       kubernetes.core.k8s_info:
+#         api_version: v1
+#         kind: Secret
+#         namespace: "{{ harbor_namespace }}"
+#         name: "{{ harbor_tls_secret_name }}"
+#       register: harbor_tls_secret
+#       delegate_to: localhost
+#       become: false
+
+#     - name: Ensure Docker trust directory for Harbor exists
+#       ansible.builtin.file:
+#         path: "/etc/docker/certs.d/{{ harbor_domain }}"
+#         state: directory
+#         owner: root
+#         group: root
+#         mode: '0755'
+
+#     - name: Write Harbor certificate to Docker trust store (for self-signed)
+#       ansible.builtin.copy:
+#         content: "{{ harbor_tls_secret.resources[0].data['ca.crt'] | b64decode }}"
+#         dest: "/etc/docker/certs.d/{{ harbor_domain }}/ca.crt"
+#         owner: root
+#         group: root
+#         mode: '0644'
+
+#     - name: Restart Docker to reload trusted CAs
+#       ansible.builtin.service:
+#         name: docker
+#         state: restarted
+
+
 - name: Configure firewall
   hosts: all
   become: true

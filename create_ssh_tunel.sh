@@ -20,41 +20,43 @@
 # -----------------------------------------------------------------------------
 set -e
 set -u
+set -x
 
 VM_NAME="saas-server"
 KUBECONFIG_PATH="/tmp/multipass_kubectl"
 
+# Check if saas-server VM is running
+IS_SAAS_SERVER_VM_RUNNING=0
+if multipass list | grep ${VM_NAME}; then
+    IS_SAAS_SERVER_VM_RUNNING=1
+fi
+
 # Check if the VM is running
-if ! multipass info "$VM_NAME" | grep -q "Running"; then
+if [ "$IS_SAAS_SERVER_VM_RUNNING" -eq 0 ]; then
     echo "Multipass VM '$VM_NAME' is not running."
     echo "Please run './run_tests.sh' to start and provision the VM first."
     exit 1
 fi
 
+SSH_PORT=2222
+
 # Get VM IP
-VM_IP=$(multipass info "$VM_NAME" | awk '/IPv4/ {print $2}')
-
-# Copy kubeconfig from VM
-multipass exec "$VM_NAME" -- sudo cat /etc/rancher/k3s/k3s.yaml >"$KUBECONFIG_PATH"
-
-# Replace server IP with localhost in kubeconfig
-# sed -i "s|server: https://.*:6443|server: https://localhost:6443|g" "$KUBECONFIG_PATH"
+VM_IP=$(multipass list | grep "$VM_NAME" | awk '{print $3}')
 
 # Start SSH tunnel in background (if not already running)
-if ! pgrep -f "ssh -N -L 6443:localhost:6443 -p 2222 ubuntu@${VM_IP}" >/dev/null; then
-    ssh -N -L 6443:localhost:6443 ubuntu@"$VM_IP" &
+if ! pgrep -f "ssh -N -L 6443:localhost:6443 -p $SSH_PORT ubuntu@${VM_IP}" >/dev/null; then
+    ssh -N -L 6443:localhost:6443 -p $SSH_PORT ubuntu@"$VM_IP" &
     TUNNEL_PID=$!
     echo "Started SSH tunnel with PID $TUNNEL_PID"
-    # Give the tunnel a moment to establish
     sleep 2
 else
     echo "SSH tunnel already running."
-    EXISTING_PID=$(pgrep -f "ssh -N -L 6443:localhost:6443 -p 2222 ubuntu@${VM_IP}" | head -n1)
+    EXISTING_PID=$(pgrep -f "ssh -N -L 6443:localhost:6443 -p $SSH_PORT ubuntu@${VM_IP}" | head -n1)
     echo "To kill the existing tunnel, run: kill $EXISTING_PID"
 fi
 
-# Test kubectl connection
-KUBECONFIG="$KUBECONFIG_PATH" kubectl --insecure-skip-tls-verify "$@"
+# Copy kubeconfig from VM
+# multipass exec "$VM_NAME" -- sudo cat /etc/rancher/k3s/k3s.yaml >"$KUBECONFIG_PATH"
 
-# Optionally, kill the tunnel after the test (uncomment if desired)
-# kill $TUNNEL_PID
+# Test kubectl connection
+# KUBECONFIG="$KUBECONFIG_PATH" kubectl --insecure-skip-tls-verify "$@"

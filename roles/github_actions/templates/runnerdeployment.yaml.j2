@@ -11,3 +11,16 @@ spec:
       labels:
         - self-hosted
         - {{ item.name }}
+      containers:
+        - name: docker
+          image: docker:dind
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: harbor-ca
+              mountPath: /etc/docker/certs.d/harbor.local/ca.crt
+              subPath: ca.crt
+      volumes:
+        - name: harbor-ca
+          secret:
+            secretName: harbor-ca

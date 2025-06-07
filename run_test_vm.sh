@@ -13,9 +13,15 @@ if ! command -v multipass >/dev/null 2>&1; then
     sudo snap install multipass
 fi
 
+# Check if saas-server VM is running
+IS_SAAS_SERVER_VM_RUNNING=0
+if multipass list | grep saas-server; then
+    IS_SAAS_SERVER_VM_RUNNING=1
+fi
+
 # Delete existing instance only if --restart is passed
-if [ "$RESTART" -eq 1 ]; then
-    if multipass info saas-server >/dev/null 2>&1; then
+if [ "$RESTART" -eq 1 ] || [ "$IS_SAAS_SERVER_VM_RUNNING" -eq 0 ]; then
+    if [ "$IS_SAAS_SERVER_VM_RUNNING" -eq 1 ]; then
         multipass delete saas-server
         multipass purge
     fi
@@ -34,7 +40,7 @@ if [ "$RESTART" -eq 1 ]; then
 fi
 
 # Get IP
-export HOST_PUBLIC_IP=$(multipass info saas-server | awk '/IPv4/ {print $2}')
+export HOST_PUBLIC_IP=$(multipass list | grep saas-server | awk '{print $3}')
 envsubst <inventory.sample.yml >inventory.yml
 
 # Install Ansible external collections
