@@ -24,7 +24,7 @@
         namespace: flux-system
       stringData:
         username: "{{ flux_github_username }}"
-        password: "{{ flux_github_token }}"
+        password: "{{ github_pat }}"
     wait: true
 
 - name: Create GitRepository for each app repo
@@ -62,4 +62,80 @@
           kind: GitRepository
           name: "{{ item.name }}"
         validation: client
+  loop: "{{ flux_app_repos }}"
+
+# Flux UI - weave-gitops
+- name: Set bcrypt hash fact
+  ansible.builtin.set_fact:
+    weave_gitops_admin_password_hash: "{{ weave_gitops_admin_password | password_hash('bcrypt') }}"
+
+- name: Install Weave GitOps (Flux UI) via Helm (OCI)
+  kubernetes.core.helm:
+    name: weave-gitops
+    chart_ref: oci://ghcr.io/weaveworks/charts/weave-gitops
+    release_namespace: flux-system
+    create_namespace: false
+    state: present
+    values:
+      adminUser:
+        create: true
+        createSecret: true
+        username: admin
+        # Use a bcrypt hash for the password (see below)
+        passwordHash: "{{ weave_gitops_admin_password_hash }}"
+
+# Notifications
+- name: Create GitHub token secret for Flux Notifications
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: flux-notify-auth
+        namespace: flux-system
+      stringData:
+        token: "{{ github_pat }}"
+    wait: true
+
+- name: Create Flux GitHub Provider for each app repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: notification.toolkit.fluxcd.io/v1beta3
+      kind: Provider
+      metadata:
+        name: "github-provider-{{ item.name }}"
+        namespace: flux-system
+      spec:
+        type: github
+        address: "{{ item.url }}"
+        secretRef:
+          name: flux-notify-auth
+  loop: "{{ flux_app_repos }}"
+
+- name: Create Flux Alert for each app repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: notification.toolkit.fluxcd.io/v1beta3
+      kind: Alert
+      metadata:
+        name: "github-alert-{{ item.name }}"
+        namespace: flux-system
+      spec:
+        providerRef:
+          name: "github-provider-{{ item.name }}"
+        eventSeverity: info
+        eventSources:
+          - kind: Kustomization
+            name: "{{ item.name }}"
+            namespace: flux-system
+        suspend: false
+        eventMetadata:
+          summary: "Flux status for {{ item.name }}"
+        statusTemplate: |
+          {% raw %}{{ .Message }} — [View on Weave-Gitops](https://localhost:9001/kustomizations/flux-system/{% endraw %}{{ item.name }}{% raw %}){% endraw %}
+
+
   loop: "{{ flux_app_repos }}"

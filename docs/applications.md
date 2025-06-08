@@ -38,24 +38,6 @@ The token will be securely stored and used by both Flux and GitHub Actions runne
 
 ## Application Structure
 
-### Kubernetes Configuration
-- Applications must include Kubernetes Custom Resource Definitions (CRDs) in the `flux` folder
-- These configurations define your application's components:
-  - Jobs
-  - Services
-  - Pods
-  - Other Kubernetes resources
-- The configurations can reference Docker images published by your CI pipelines
-
-### Kustomize Integration
-- Flux uses Kustomize for managing Kubernetes configurations
-- Each application should include a `kustomization.yaml` file that:
-  - References the Kubernetes manifests
-  - Defines common labels and annotations
-  - Manages environment-specific configurations
-- For more information about Kustomize, see the [official documentation](https://kustomize.io/)
-- To learn how Flux integrates with Kustomize, refer to the [Flux Kustomize documentation](https://fluxcd.io/flux/components/kustomize/)
-
 ### Continuous Integration (CI)
 - GitHub Actions is used for CI
 - Actions are defined in your application repository as you would normally do in GitHub
@@ -72,6 +54,36 @@ To publish Docker images to Harbor:
 2. Use the following credentials for Docker login:
    - Username: `admin`
    - Password: The Harbor admin password secret you configured
+   - host: harbor.local
+
+### Continuous Deployment (CD)
+
+#### Kubernetes Configuration
+- Applications must include Kubernetes Custom Resource Definitions (CRDs) in the `flux` folder
+- These configurations define your application's components:
+  - Jobs
+  - Services
+  - Pods
+  - Other Kubernetes resources
+- The configurations can reference Docker images published by your CI pipelines
+
+#### Kustomize Integration
+- Flux uses Kustomize for managing Kubernetes configurations
+- Each application should include a `kustomization.yaml` file that:
+  - References the Kubernetes manifests
+  - Defines common labels and annotations
+  - Manages environment-specific configurations
+- For more information about Kustomize, see the [official documentation](https://kustomize.io/)
+- To learn how Flux integrates with Kustomize, refer to the [Flux Kustomize documentation](https://fluxcd.io/flux/components/kustomize/)
+
+#### Flux UI - Weave-gitops
+
+Execute the following command to create a port-forward for the flux UI:
+```bash
+kubectl -n flux-system port-forward svc/weave-gitops 9001:9001
+```
+
+Visit [http://localhost:9001](http://localhost:9001) and log in with admin and the password you specified in secrets.
 
 ## Best Practices
 
