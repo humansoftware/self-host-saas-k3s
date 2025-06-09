@@ -17,3 +17,7 @@
 - name: Install GitHub Actions Runner and integrate with Flux repos
   ansible.builtin.include_role:
     name: github_actions
+
+- name: Install Monitoring (Prometheus & Grafana)
+  ansible.builtin.include_role:
+    name: monitoring
