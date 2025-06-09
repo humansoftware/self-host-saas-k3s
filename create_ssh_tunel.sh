@@ -25,9 +25,12 @@ set -x
 VM_NAME="saas-server"
 KUBECONFIG_PATH="/tmp/multipass_kubectl"
 
+# Run multipass list once and store output
+MP_LIST_OUTPUT=$(multipass list)
+
 # Check if saas-server VM is running
 IS_SAAS_SERVER_VM_RUNNING=0
-if multipass list | grep ${VM_NAME}; then
+if echo "$MP_LIST_OUTPUT" | grep -q "${VM_NAME}"; then
     IS_SAAS_SERVER_VM_RUNNING=1
 fi
 
@@ -41,7 +44,7 @@ fi
 SSH_PORT=2222
 
 # Get VM IP
-VM_IP=$(multipass list | grep "$VM_NAME" | awk '{print $3}')
+VM_IP=$(echo "$MP_LIST_OUTPUT" | grep "${VM_NAME}" | awk '{print $3}')
 
 # Start SSH tunnel in background (if not already running)
 if ! pgrep -f "ssh -N -L 6443:localhost:6443 -p $SSH_PORT ubuntu@${VM_IP}" >/dev/null; then

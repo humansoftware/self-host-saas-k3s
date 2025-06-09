@@ -13,9 +13,12 @@ if ! command -v multipass >/dev/null 2>&1; then
     sudo snap install multipass
 fi
 
+# Run multipass list once and store output
+MP_LIST_OUTPUT=$(multipass list)
+
 # Check if saas-server VM is running
 IS_SAAS_SERVER_VM_RUNNING=0
-if multipass list | grep saas-server; then
+if echo "$MP_LIST_OUTPUT" | grep -q "${VM_NAME}"; then
     IS_SAAS_SERVER_VM_RUNNING=1
 fi
 
@@ -40,7 +43,7 @@ if [ "$RESTART" -eq 1 ] || [ "$IS_SAAS_SERVER_VM_RUNNING" -eq 0 ]; then
 fi
 
 # Get IP
-export HOST_PUBLIC_IP=$(multipass list | grep saas-server | awk '{print $3}')
+export HOST_PUBLIC_IP=$(echo "$MP_LIST_OUTPUT" | grep saas-server | awk '{print $3}')
 envsubst <inventory.sample.yml >inventory.yml
 
 # Install Ansible external collections
