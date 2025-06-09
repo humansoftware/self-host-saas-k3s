@@ -107,6 +107,11 @@
         name: containerd
         state: restarted
 
+    - name: Restart k3s to reload trusted CAs
+      ansible.builtin.service:
+        name: k3s
+        state: restarted
+
 - name: Configure firewall
   hosts: all
   become: true
