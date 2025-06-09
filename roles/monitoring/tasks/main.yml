@@ -1,0 +1,7 @@
+# - name: Install kube-prometheus-stack (Prometheus & Grafana)
+#   kubernetes.core.helm:
+#     name: kube-prometheus-stack
+#     chart_ref: prometheus-community/kube-prometheus-stack
+#     release_namespace: monitoring
+#     create_namespace: true
+#     values: {}
