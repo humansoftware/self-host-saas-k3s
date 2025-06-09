@@ -37,7 +37,7 @@
   roles:
     - install_k8s_apps
 
-- name: Trust Harbor CA in Docker
+- name: Trust Harbor CA in containerd
   hosts: all
   become: true
   tasks:
@@ -88,7 +88,7 @@
         owner: root
         group: root
         mode: '0644'
-    
+
     - name: Copy Harbor CA to system trust store
       ansible.builtin.copy:
         src: "/etc/containerd/certs.d/{{ harbor_domain }}/ca.crt"
@@ -100,8 +100,7 @@
 
     - name: Update system CA certificates
       ansible.builtin.command: update-ca-certificates
-      args:
-        warn: false
+      changed_when: false
 
     - name: Restart containerd to reload trusted CAs
       ansible.builtin.service:
