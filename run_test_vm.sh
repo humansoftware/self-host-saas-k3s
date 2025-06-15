@@ -33,7 +33,7 @@ if [ "$RESTART" -eq 1 ] || [ "$IS_SAAS_SERVER_VM_RUNNING" -eq 0 ]; then
     # Generate cloud-init.yaml with your public key
     envsubst <cloud-init.yaml >cloud-init.generated.yaml
     # Launch VM
-    multipass launch --name ${VM_NAME} --cpus 2 --memory 4G --disk 35G 24.04 --cloud-init cloud-init.generated.yaml
+    multipass launch --name ${VM_NAME} --cpus 2 --memory 6G --disk 35G 24.04 --cloud-init cloud-init.generated.yaml
 fi
 
 # Get IP
