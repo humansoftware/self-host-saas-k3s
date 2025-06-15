@@ -17,7 +17,7 @@ https://github.com/humansoftware/example_self_hosted_saas_app
 To deploy applications to your cluster, you need to configure them in the cluster's configuration:
 
 1. Edit the file `group_vars/all/secrets.yml` to specify which applications to deploy
-2. Add your application repositories to the `flux_app_repos` list
+2. Add your application repositories to the `self_saas_projects` list
 3. Each repository should be specified in the format: `owner/repo-name`
 
 For an example configuration, see [secrets.example.yml](..https://github.com/humansoftware/self-host-saas-k3s/blob/main/group_vars/all/secrets.example.yml)

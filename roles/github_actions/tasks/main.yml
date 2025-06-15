@@ -63,7 +63,7 @@
     src: runnerdeployment.yaml.j2
     dest: "/tmp/runnerdeployment_{{ item.name }}.yaml"
     mode: '0644'
-  loop: "{{ flux_app_repos }}"
+  loop: "{{ self_saas_projects }}"
   register: rendered_runner_deployments
 
 - name: Apply runner deployments

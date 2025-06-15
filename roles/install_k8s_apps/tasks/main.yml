@@ -21,3 +21,8 @@
 - name: Install Monitoring (Prometheus & Grafana)
   ansible.builtin.include_role:
     name: monitoring
+
+- name: Install Mailu
+  ansible.builtin.include_role:
+    name: mailu
+  when: install_mailu_for_smtp

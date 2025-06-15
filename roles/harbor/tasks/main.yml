@@ -216,7 +216,7 @@
                 env:
                   - name: HARBOR_ADMIN_PASSWORD
                     value: "{{ harbor_admin_password }}"
-  loop: "{{ flux_app_repos }}"
+  loop: "{{ self_saas_projects }}"
 
 - name: Delete Harbor project creation Jobs
   kubernetes.core.k8s:
@@ -225,4 +225,4 @@
     kind: Job
     name: "create-harbor-project-{{ item.name | lower | regex_replace('[^a-z0-9-]', '-') }}"
     namespace: "{{ harbor_namespace }}"
-  loop: "{{ flux_app_repos }}"
+  loop: "{{ self_saas_projects }}"

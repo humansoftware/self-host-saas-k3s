@@ -1,0 +1,67 @@
+- name: Add Mailu Helm repo
+  ansible.builtin.shell: |
+    helm repo add mailu https://mailu.github.io/helm-charts || true
+    helm repo update
+  changed_when: false
+
+- name: Initialize Mailu initial accounts dict
+  ansible.builtin.set_fact:
+    mailu_initial_accounts_dict: {}
+
+- name: Add each SMTP user to Mailu initial accounts dict
+  ansible.builtin.set_fact:
+    mailu_initial_accounts_dict: >-
+      {{
+        mailu_initial_accounts_dict | combine({
+          'user' ~ (idx + 1):
+            item.smtp.user ~ ':' ~
+            item.smtp.password ~ ':' ~
+            item.smtp.domain
+        })
+      }}
+  loop: "{{ self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list }}"
+  loop_control:
+    index_var: idx
+    label: "{{ item.name }}"
+  when: item.smtp.enabled | default(false)
+
+- name: Create Mailu initial accounts secret for SMTP users
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: mailu-initial-accounts
+        namespace: mailu
+      type: Opaque
+      stringData: "{{ mailu_initial_accounts_dict }}"
+  when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
+
+- name: Install Mailu using Helm for enabled projects (public SMTP)
+  kubernetes.core.helm:
+    name: "mailu"
+    chart_ref: mailu/mailu
+    release_namespace: mailu
+    create_namespace: true
+    values:
+      hostnames: "{{ self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | map(attribute='smtp.domain') | list }}"
+      domain: "{{ (self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list)[0].smtp.domain }}"
+      admin:
+        enabled: true
+        username: "{{ mailu_admin_username }}"
+        password: "{{ mailu_admin_password }}"
+        email: "{{ mailu_admin_email }}"
+      service:
+        smtp:
+          type: LoadBalancer
+        submission:
+          type: LoadBalancer
+        smtps:
+          type: LoadBalancer
+      initialAccounts:
+        existingSecret: mailu-initial-accounts
+      persistence:
+        enabled: true
+        storageClass: longhorn
+  when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0

@@ -7,7 +7,7 @@ spec:
   replicas: 1
   template:
     spec:
-      repository: {{ item.url | regex_replace('^https://github.com/', '') | regex_replace('.git$', '') }}
+      repository: {{ item.github_repo_http_url | regex_replace('^https://github.com/', '') | regex_replace('.git$', '') }}
       labels:
         - self-hosted
         - {{ item.name }}

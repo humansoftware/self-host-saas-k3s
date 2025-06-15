@@ -1,7 +1,51 @@
-# - name: Install kube-prometheus-stack (Prometheus & Grafana)
-#   kubernetes.core.helm:
-#     name: kube-prometheus-stack
-#     chart_ref: prometheus-community/kube-prometheus-stack
-#     release_namespace: monitoring
-#     create_namespace: true
-#     values: {}
+- name: Create namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ monitoring_namespace }}"
+  when: prometheus_enabled or grafana_enabled
+
+- name: Add Helm repos
+  ansible.builtin.shell: |
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
+    helm repo add grafana https://grafana.github.io/helm-charts || true
+    helm repo update
+  changed_when: false
+
+- name: Install Prometheus using Helm
+  when: prometheus_enabled
+  kubernetes.core.helm:
+    name: prometheus
+    chart_ref: prometheus-community/prometheus
+    release_namespace: "{{ monitoring_namespace }}"
+    create_namespace: false
+    values:
+      prometheus:
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: "{{ prometheus_storage_class }}"
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: "{{ prometheus_storage_size }}"
+      alertmanager:
+        enabled: "{{ prometheus_alertmanager_enabled }}"
+
+- name: Install Grafana using Helm
+  when: grafana_enabled
+  kubernetes.core.helm:
+    name: grafana
+    chart_ref: grafana/grafana
+    release_namespace: "{{ monitoring_namespace }}"
+    values:
+      persistence:
+        enabled: true
+        storageClassName: "{{ grafana_storage_class }}"
+        accessModes:
+          - ReadWriteOnce
+        size: "{{ grafana_storage_size }}"
+      adminUser: "{{ grafana_admin_user }}"
+      adminPassword: "{{ grafana_admin_password }}"
+      service:
+        type: ClusterIP

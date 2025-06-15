@@ -38,12 +38,12 @@
         namespace: flux-system
       spec:
         interval: "{{ flux_git_repo_interval }}"
-        url: "{{ item.url }}"
+        url: "{{ item.github_repo_http_url }}"
         secretRef:
           name: flux-git-auth
         ref:
           branch: main
-  loop: "{{ flux_app_repos }}"
+  loop: "{{ self_saas_projects }}"
 
 - name: Create Kustomization for each app repo
   kubernetes.core.k8s:
@@ -62,7 +62,7 @@
           kind: GitRepository
           name: "{{ item.name }}"
         validation: client
-  loop: "{{ flux_app_repos }}"
+  loop: "{{ self_saas_projects }}"
 
 # Flux UI - weave-gitops
 - name: Set bcrypt hash fact
@@ -109,10 +109,10 @@
         namespace: flux-system
       spec:
         type: github
-        address: "{{ item.url }}"
+        address: "{{ item.github_repo_http_url }}"
         secretRef:
           name: flux-notify-auth
-  loop: "{{ flux_app_repos }}"
+  loop: "{{ self_saas_projects }}"
 
 - name: Create Flux Alert for each app repo
   kubernetes.core.k8s:
@@ -138,4 +138,4 @@
           {% raw %}{{ .Message }} — [View on Weave-Gitops](https://localhost:9001/kustomizations/flux-system/{% endraw %}{{ item.name }}{% raw %}){% endraw %}
 
 
-  loop: "{{ flux_app_repos }}"
+  loop: "{{ self_saas_projects }}"
