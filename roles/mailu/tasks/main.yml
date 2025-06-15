@@ -1,3 +1,10 @@
+- name: Ensure mailu namespace exists
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: mailu
+    state: present
+
 - name: Add Mailu Helm repo
   ansible.builtin.shell: |
     helm repo add mailu https://mailu.github.io/helm-charts || true
@@ -43,7 +50,6 @@
     name: "mailu"
     chart_ref: mailu/mailu
     release_namespace: mailu
-    create_namespace: true
     values:
       hostnames: "{{ self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | map(attribute='smtp.domain') | list }}"
       domain: "{{ (self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list)[0].smtp.domain }}"

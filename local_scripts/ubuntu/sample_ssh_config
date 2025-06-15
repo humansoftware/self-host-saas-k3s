@@ -1,0 +1,10 @@
+# Sample SSH config for Self-Host SaaS K3s
+# Replace <REPLACE_WITH_YOUR_SERVER_IP> with your actual server IP
+
+Host k3s-tunnel
+    HostName <REPLACE_WITH_YOUR_SERVER_IP>
+    User ubuntu
+    Port 2222
+    LocalForward 6443 localhost:6443
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
