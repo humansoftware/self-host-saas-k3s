@@ -2,12 +2,13 @@
 monitoring_namespace: monitoring
 
 prometheus_enabled: true
-prometheus_storage_size: 1Gi
+prometheus_storage_size: 200Mi
 prometheus_storage_class: longhorn
 prometheus_alertmanager_enabled: true
+prometheus_alertmanager_storage_size: 100Mi
 
 grafana_enabled: true
-grafana_storage_size: 1Gi
+grafana_storage_size: 200Mi
 grafana_storage_class: longhorn
 grafana_admin_user: admin
 grafana_admin_password: admin

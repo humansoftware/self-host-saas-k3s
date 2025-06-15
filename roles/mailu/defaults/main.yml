@@ -1,1 +1,5 @@
 # Default variables for Mailu role
+mailu_persistence_size: 500Mi
+mailu_redis_size: 150Mi
+mailu_clamav_size: 150Mi
+mailu_storage_class: longhorn-single-replica

@@ -31,6 +31,15 @@
                   storage: "{{ prometheus_storage_size }}"
       alertmanager:
         enabled: "{{ prometheus_alertmanager_enabled }}"
+        alertmanagerSpec:
+          storage:
+            volumeClaimTemplate:
+              spec:
+                storageClassName: "{{ prometheus_storage_class }}"
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: "{{ prometheus_alertmanager_storage_size }}"
 
 - name: Install Grafana using Helm
   when: grafana_enabled

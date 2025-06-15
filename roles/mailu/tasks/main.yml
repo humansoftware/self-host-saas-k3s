@@ -69,5 +69,53 @@
         existingSecret: mailu-initial-accounts
       persistence:
         enabled: true
-        storageClass: longhorn
+        storageClass: "{{ mailu_storage_class }}"
+        size: "{{ mailu_persistence_size }}"
+      redis:
+        master:
+          persistence:
+            enabled: true
+            size: "{{ mailu_redis_size }}"
+      clamav:
+        persistence:
+          enabled: true
+          size: "{{ mailu_clamav_size }}"
+      imap:
+        enabled: false
+      pop3:
+        enabled: false
+      webmail:
+        enabled: false
+      antivirus:
+        enabled: false
+  when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
+
+- name: Set cert-manager issuer and domain logic
+  ansible.builtin.set_fact:
+    mailu_cert_issuer_name: "{{ 'letsencrypt-prod' if environment_type == 'prod' else 'selfsigned-cluster-issuer' }}"
+    mailu_cert_issuer_kind: "ClusterIssuer"
+
+- name: Create self-signed ClusterIssuer for local testing
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: selfsigned-cluster-issuer
+      spec:
+        selfSigned: {}
+  when: environment_type == 'local_test'
+
+- name: Render and apply Mailu cert-manager Certificate for all enabled domains
+  ansible.builtin.template:
+    src: mailu-certificate.yaml.j2
+    dest: "/tmp/mailu-certificate.yaml"
+    mode: '0644'
+  when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
+
+- name: Apply Mailu cert-manager Certificate manifest
+  kubernetes.core.k8s:
+    state: present
+    src: "/tmp/mailu-certificate.yaml"
   when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0

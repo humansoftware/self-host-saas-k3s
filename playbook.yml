@@ -8,6 +8,12 @@
         msg: "The environment variable HOST_PUBLIC_IP must be set before running this playbook."
       when: host_public_ip is not defined or host_public_ip == ""
 
+- name: Configure firewall
+  hosts: k3s_cluster
+  become: true
+  roles:
+    - firewall
+
 - name: Setup K3s Cluster
   hosts: k3s_cluster
   become: true
@@ -37,9 +43,3 @@
   become: true
   roles:
     - add_harbor_ca_certs_to_k3s
-
-- name: Configure firewall
-  hosts: k3s_cluster
-  become: true
-  roles:
-    - firewall

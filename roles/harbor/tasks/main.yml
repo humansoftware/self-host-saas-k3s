@@ -66,6 +66,15 @@
         persistentVolumeClaim:
           registry:
             size: "{{ harbor_registry_size }}"
+          database:
+            size: "{{ harbor_database_size }}"
+          redis:
+            size: "{{ harbor_redis_size }}"
+          trivy:
+            size: "{{ harbor_trivy_size }}"
+          jobservice:
+            jobLog:
+              size: "{{ harbor_jobservice_size }}"
     wait: true
     wait_timeout: 5m
 

@@ -23,5 +23,9 @@ echo "Harbor: http://localhost:8081 (admin/<your password>)"
 kubectl -n flux-system port-forward svc/weave-gitops 9001:9001 &
 echo "Flux UI: http://localhost:9001 (admin/<your password>)"
 
+# Forward Mailu Admin UI
+kubectl -n mailu port-forward svc/mailu-admin 8082:80 &
+echo "Mailu Admin: http://localhost:8082 (admin/<your password>)"
+
 # Wait for background jobs
 wait

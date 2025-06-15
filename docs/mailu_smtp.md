@@ -84,3 +84,14 @@ smtp.another.example.com.  IN A 203.0.113.10
 - Always test your email deliverability and check spam folders after setup.
 
 For more details, see the [Mailu documentation](https://mailu.io/).
+
+## 6. Accessing the Mailu Admin UI
+
+To access the Mailu Admin web interface locally, use kubectl port-forward:
+
+```sh
+kubectl -n mailu port-forward svc/mailu-admin 8082:80
+```
+
+Then open [http://localhost:8082](http://localhost:8082) in your browser. Login with your admin credentials.
+
