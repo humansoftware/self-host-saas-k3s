@@ -77,9 +77,14 @@
             enabled: true
             size: "{{ mailu_redis_size }}"
       clamav:
+        enabled: "{{ mailu_enable_clamav | default(false) }}"
         persistence:
           enabled: true
           size: "{{ mailu_clamav_size }}"
+      oletools:
+        enabled: "{{ mailu_enable_oletools | default(false) }}"
+      tika:
+        enabled: "{{ mailu_enable_tika | default(false) }}"
       imap:
         enabled: false
       pop3:
@@ -88,6 +93,13 @@
         enabled: false
       antivirus:
         enabled: false
+      front:
+        hostPort:
+          enabled: false
+        externalService:
+          enabled: true
+          type: LoadBalancer
+          externalTrafficPolicy: Local
   when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
 
 - name: Set cert-manager issuer and domain logic

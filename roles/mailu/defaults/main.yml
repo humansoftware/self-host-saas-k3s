@@ -3,3 +3,6 @@ mailu_persistence_size: 500Mi
 mailu_redis_size: 150Mi
 mailu_clamav_size: 150Mi
 mailu_storage_class: longhorn-single-replica
+mailu_enable_clamav: false
+mailu_enable_oletools: false
+mailu_enable_tika: false
