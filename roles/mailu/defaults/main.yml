@@ -1,4 +1,5 @@
 # Default variables for Mailu role
+mailu_enable_admin: true
 mailu_persistence_size: 500Mi
 mailu_redis_size: 150Mi
 mailu_clamav_size: 150Mi

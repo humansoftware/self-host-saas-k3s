@@ -54,7 +54,7 @@
       hostnames: "{{ self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | map(attribute='smtp.domain') | list }}"
       domain: "{{ (self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list)[0].smtp.domain }}"
       admin:
-        enabled: true
+        enabled: "{{ mailu_enable_admin | default(true) }}"
         username: "{{ mailu_admin_username }}"
         password: "{{ mailu_admin_password }}"
         email: "{{ mailu_admin_email }}"
