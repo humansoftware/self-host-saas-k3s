@@ -75,6 +75,7 @@
                   fallthrough in-addr.arpa ip6.arpa
               }
               forward . 1.1.1.1 9.9.9.9
+              dnssec
               cache 30
               loop
               reload
