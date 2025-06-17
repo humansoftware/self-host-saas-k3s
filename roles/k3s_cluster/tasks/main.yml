@@ -120,11 +120,11 @@
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ ansible_uid | default(1000) }}"
 
-- name: Enable lingering for user
-  ansible.builtin.command: loginctl enable-linger {{ ansible_user_id }}
-  delegate_to: localhost
-  run_once: true
-  become: false
-  changed_when: false
-  failed_when: enable_linger_result.rc not in [0,1]
-  register: enable_linger_result
+# - name: Enable lingering for user
+#   ansible.builtin.command: loginctl enable-linger {{ ansible_user_id }}
+#   delegate_to: localhost
+#   run_once: true
+#   become: false
+#   changed_when: false
+#   failed_when: enable_linger_result.rc not in [0,1]
+#   register: enable_linger_result

@@ -55,7 +55,24 @@
                   class: traefik
 
 
-- name: Patch CoreDNS to use DNSSEC-validating upstreams and preserve NodeHosts
+- name: Sanitize NodeHosts to remove IPv6 entries before patching CoreDNS
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: kube-system
+    name: coredns
+  register: coredns_cm_for_sanitize
+
+- name: Set sanitized NodeHosts (IPv4 only)
+  ansible.builtin.set_fact:
+    sanitized_nodehosts: |
+      {% for line in coredns_cm_for_sanitize.resources[0].data.get('NodeHosts', '').splitlines() %}
+      {% set parts = line.split() %}
+      {% if parts and (parts[0] | default('')).count('.') == 3 %}{{ line }}
+      {% endif %}
+      {% endfor %}
+
+- name: Patch CoreDNS to use DNSSEC-validating upstreams and preserve NodeHosts (IPv4 only)
   kubernetes.core.k8s:
     state: present
     namespace: kube-system
@@ -86,7 +103,7 @@
               reload
               loadbalance
           }
-          import /etc/coredns/NodeHosts
+        NodeHosts: "{{ sanitized_nodehosts }}"
 
 - name: Restart CoreDNS to apply changes
   kubernetes.core.k8s:
