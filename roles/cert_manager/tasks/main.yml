@@ -55,7 +55,7 @@
                   class: traefik
 
 
-- name: Patch CoreDNS to use DNSSEC-validating upstreams
+- name: Patch CoreDNS to use DNSSEC-validating upstreams and preserve NodeHosts
   kubernetes.core.k8s:
     state: present
     namespace: kube-system
@@ -74,6 +74,11 @@
                   pods insecure
                   fallthrough in-addr.arpa ip6.arpa
               }
+              hosts /etc/coredns/NodeHosts {
+                  ttl 60
+                  reload 15s
+                  fallthrough
+              }
               forward . 1.1.1.1 9.9.9.9
               dnssec
               cache 30
@@ -81,6 +86,7 @@
               reload
               loadbalance
           }
+          import /etc/coredns/NodeHosts
 
 - name: Restart CoreDNS to apply changes
   kubernetes.core.k8s:
