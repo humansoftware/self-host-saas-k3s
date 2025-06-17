@@ -66,6 +66,7 @@
     mode: '0700'
   delegate_to: localhost
   run_once: true
+  become: false
 
 - name: Create SSH tunnel config file
   ansible.builtin.template:
@@ -74,6 +75,7 @@
     mode: '0600'
   delegate_to: localhost
   run_once: true
+  become: false
   vars:
     k3s_server_ip: "{{ host_public_ip }}"
     k3s_ssh_port: "{{ ssh_port_rewritten | default(2222) }}"
@@ -85,6 +87,7 @@
     mode: '0700'
   delegate_to: localhost
   run_once: true
+  become: false
 
 - name: Create k3s-tunnel systemd user service
   ansible.builtin.template:
@@ -93,6 +96,7 @@
     mode: '0644'
   delegate_to: localhost
   run_once: true
+  become: false
 
 - name: Reload systemd user daemon
   ansible.builtin.systemd_service:
@@ -100,6 +104,7 @@
     scope: user
   delegate_to: localhost
   run_once: true
+  become: false
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ ansible_uid | default(1000) }}"
 
@@ -111,6 +116,7 @@
     scope: user
   delegate_to: localhost
   run_once: true
+  become: false
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ ansible_uid | default(1000) }}"
 
@@ -118,6 +124,7 @@
   ansible.builtin.command: loginctl enable-linger {{ ansible_user_id }}
   delegate_to: localhost
   run_once: true
+  become: false
   changed_when: false
   failed_when: enable_linger_result.rc not in [0,1]
   register: enable_linger_result
