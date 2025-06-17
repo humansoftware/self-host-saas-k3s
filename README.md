@@ -26,7 +26,7 @@ While running Kubernetes on a single node might seem like overkill, I chose K3s 
 
 2. **Development Velocity**: K3s provides all the services and tools we're used to in cloud environments, making development cycles faster and more efficient.
 
-3. **Flexibility**: The setup allows hosting multiple projects with different requirements on the same server with minimal effort, including:
+3. **Flexibility**: The setup allows hosting of multiple projects with different requirements on the same server with minimal effort, including:
    - Web applications and APIs
    - Background jobs and cron tasks
    - Data pipelines and processing
@@ -35,6 +35,12 @@ While running Kubernetes on a single node might seem like overkill, I chose K3s 
 4. **Future-Proof**: If you need to scale later, the transition to a multi-node cluster is much simpler.
 
 5. **Cost-Effective**: You get all the benefits of a cloud-like environment at a fraction of the cost.
+
+## Using a Separate Repository for Customization (Recommended Practice)
+
+For production or custom environments, it is recommended to keep your sensitive and environment-specific files (such as `inventory.yml`, `secrets.yml`, and `cloud-init.yaml`) in a separate private repository. This keeps your secrets and customizations out of version control for the main project and makes upgrades and collaboration safer.
+
+See the [Installation Guide](docs/installation.md) for detailed instructions and best practices on how to structure your private repo and run Ansible with your custom files.
 
 ## Documentation
 

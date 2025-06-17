@@ -22,6 +22,15 @@ set -e
 set -u
 set -x
 
+# Detect script folder and ensure script is run from the parent folder
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+if [ "$PWD" != "$PARENT_DIR" ]; then
+    echo "Please run this script from the project root or parent folder, e.g.:"
+    echo "  ./tests/$(basename \"$0\")"
+    exit 1
+fi
+
 VM_NAME="saas-server"
 KUBECONFIG_PATH="/tmp/multipass_kubectl"
 
@@ -37,7 +46,7 @@ fi
 # Check if the VM is running
 if [ "$IS_SAAS_SERVER_VM_RUNNING" -eq 0 ]; then
     echo "Multipass VM '$VM_NAME' is not running."
-    echo "Please run './run_tests.sh' to start and provision the VM first."
+    echo "Please run './tests/run_test_vm.sh' to start and provision the VM first."
     exit 1
 fi
 

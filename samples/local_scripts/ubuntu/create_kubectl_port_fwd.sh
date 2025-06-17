@@ -2,6 +2,17 @@
 # Script to start all useful kubectl port-forwards for Self-Host SaaS K3s
 # Run this script from your terminal. Each port-forward runs in the background.
 # Stop with Ctrl+C or kill the processes manually.
+SSH_PORT=2222
+HOST_PUBLIC_IP="YOUR_HOST_PUBLIC_IP" # Replace with your actual host public IP
+
+# Check if a ssh tunnel is already running
+if pgrep -f "ssh -N -L 6443:localhost:6443 -p $SSH_PORT ubuntu@$HOST_PUBLIC_IP" >/dev/null; then
+    echo "SSH tunnel is already running. Exiting."
+else
+    # Create ssh tunnel to the host
+    ssh -N -L 6443:localhost:6443 -p $SSH_PORT ubuntu@$HOST_PUBLIC_IP &
+    echo "SSH tunnel created. You can now use kubectl to connect to the cluster."
+fi
 
 # Forward Grafana UI
 kubectl -n monitoring port-forward svc/grafana 3000:80 &

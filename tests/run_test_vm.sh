@@ -1,7 +1,17 @@
 #!/bin/sh
+
 set -e
 set -u
 set -x
+
+# Detect script folder and ensure script is run from the parent folder
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+if [ "$PWD" != "$PARENT_DIR" ]; then
+    echo "Please run this script from the project root or parent folder, e.g.:"
+    echo "  ./tests/$(basename "$0")"
+    exit 1
+fi
 
 VM_NAME="saas-server"
 
@@ -31,17 +41,17 @@ if [ "$RESTART" -eq 1 ] || [ "$IS_SAAS_SERVER_VM_RUNNING" -eq 0 ]; then
     export SSH_PUBLIC_KEY="$(cat ~/.ssh/id_rsa.pub)"
 
     # Generate cloud-init.yaml with your public key
-    envsubst <cloud-init.yaml >cloud-init.generated.yaml
+    envsubst <samples/cloud-init.yaml >tests/cloud-init.generated.yaml
     # Launch VM
-    multipass launch --name ${VM_NAME} --cpus 2 --memory 6G --disk 35G 24.04 --cloud-init cloud-init.generated.yaml
+    multipass launch --name ${VM_NAME} --cpus 2 --memory 6G --disk 35G 24.04 --cloud-init ./tests/cloud-init.generated.yaml
 fi
 
 # Get IP
 export HOST_PUBLIC_IP=$(multipass list | grep ${VM_NAME} | awk '{print $3}')
-envsubst <inventory.sample.yml >inventory.yml
+envsubst <samples/inventory.sample.yml >tests/inventory.yml
 
 # Install Ansible external collections
 ansible-galaxy install -r requirements.yml
 # Run playbook
 export ANSIBLE_HOST_KEY_CHECKING=False # Disable host key checking
-ansible-playbook -i inventory.yml playbook.yml
+ansible-playbook -i tests/inventory.yml playbook.yml -e @tests/secrets.yml

@@ -1,4 +1,4 @@
-# Local Scripts and Sample Configurations
+# Local Scripts and Configurations
 
 This folder contains ready-to-use scripts and configuration examples to help you connect to and manage your Self-Host SaaS K3s cluster from your local machine.
 
@@ -19,11 +19,14 @@ This folder contains ready-to-use scripts and configuration examples to help you
    - Run: `./create_kubectl_port_fwd.sh`
    - Access UIs at the printed local URLs.
 
-## Why Use These?
+---
 
-- Simplifies secure access to your cluster and its UIs without exposing extra ports.
-- Reduces manual steps and errors when connecting or forwarding ports.
-- Provides a starting point for further automation or customization.
+**Note:**
+If you are running test scripts (such as `run_test_vm.sh`), make sure to execute them from the project root or parent folder, e.g.:
+
+```sh
+./tests/run_test_vm.sh
+```
 
 ---
 

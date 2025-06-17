@@ -1,4 +1,5 @@
 .vagrant
 group_vars/all/secrets.yml
+tests/secrets.yml
 inventory.yml
 cloud-init.generated.yaml
