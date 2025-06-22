@@ -2,6 +2,8 @@ site_name: Self-Host SaaS K3s
 repo_url: https://github.com/humansoftware/self-host-saas-k3s
 theme:
   name: material
+  features:
+    - navigation.expand
 nav:
   - Home: index.md
   - Getting Started:
@@ -15,3 +17,4 @@ nav:
   - Application Management:
       - Applications: applications.md
       - Monitoring: monitoring.md
+      - Mailu SMTP: mailu_smtp.md
