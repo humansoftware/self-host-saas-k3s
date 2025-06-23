@@ -30,13 +30,14 @@
     chart_ref: actions-runner-controller/actions-runner-controller
     release_namespace: actions-runner-system
     create_namespace: true
-    wait: true
     values:
       authSecret:
         create: false
         name: controller-manager-gh-secret
       podLabels:
         control-plane: controller-manager
+    wait: true
+    wait_timeout: 5m
 
 - name: Get Harbor TLS secret
   kubernetes.core.k8s_info:

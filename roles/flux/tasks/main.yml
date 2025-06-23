@@ -83,6 +83,8 @@
         username: admin
         # Use a bcrypt hash for the password (see below)
         passwordHash: "{{ weave_gitops_admin_password_hash }}"
+    wait: true
+    wait_timeout: 5m
 
 # Notifications
 - name: Create GitHub token secret for Flux Notifications

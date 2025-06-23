@@ -23,24 +23,28 @@
     - role: k3s_cluster
       tags: k3s_cluster
 
-- name: Set kubeconfig path fact on localhost
-  hosts: localhost
-  gather_facts: false
-  tasks:
-    - name: Set kubeconfig path for use on localhost
-      ansible.builtin.set_fact:
-        k3s_kubeconfig_path: "{{ hostvars[groups['k3s_cluster'][0]].k3s_kubeconfig_path }}"
-      tags: always
-
 - name: Install Kubernetes apps
   hosts: localhost
   gather_facts: false
   become: false
   environment:
-    KUBECONFIG: "{{ k3s_kubeconfig_path }}"
+    KUBECONFIG: "{{ k3s_local_kubeconfig }}"
   roles:
-    - role: install_k8s_apps
-      tags: install_k8s_apps
+    - role: cert_manager
+      tags: cert_manager
+    - role: longhorn
+      tags: longhorn
+    - role: harbor
+      tags: harbor
+    - role: flux
+      tags: flux
+    - role: github_actions
+      tags: github_actions
+    - role: monitoring
+      tags: monitoring
+    - role: mailu
+      when: install_mailu_for_smtp
+      tags: mailu
 
 - name: Trust Harbor CA in containerd
   hosts: k3s_cluster
