@@ -12,14 +12,16 @@
   hosts: k3s_cluster
   become: true
   roles:
-    - firewall
+    - role: firewall
+      tags: firewall
 
 - name: Setup K3s Cluster
   hosts: k3s_cluster
   become: true
   gather_facts: true
   roles:
-    - k3s_cluster
+    - role: k3s_cluster
+      tags: k3s_cluster
 
 - name: Set kubeconfig path fact on localhost
   hosts: localhost
@@ -28,6 +30,7 @@
     - name: Set kubeconfig path for use on localhost
       ansible.builtin.set_fact:
         k3s_kubeconfig_path: "{{ hostvars[groups['k3s_cluster'][0]].k3s_kubeconfig_path }}"
+      tags: always
 
 - name: Install Kubernetes apps
   hosts: localhost
@@ -36,10 +39,12 @@
   environment:
     KUBECONFIG: "{{ k3s_kubeconfig_path }}"
   roles:
-    - install_k8s_apps
+    - role: install_k8s_apps
+      tags: install_k8s_apps
 
 - name: Trust Harbor CA in containerd
   hosts: k3s_cluster
   become: true
   roles:
-    - add_harbor_ca_certs_to_k3s
+    - role: add_harbor_ca_certs_to_k3s
+      tags: add_harbor_ca_certs_to_k3s

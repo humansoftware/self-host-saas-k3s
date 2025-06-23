@@ -1,28 +1,35 @@
 - name: Install cert-manager
   ansible.builtin.include_role:
     name: cert_manager
+  tags: cert_manager
 
 - name: Install Longhorn
   ansible.builtin.include_role:
     name: longhorn
+  tags: longhorn
 
 - name: Install Harbor
   ansible.builtin.include_role:
     name: harbor
+  tags: harbor
 
 - name: Install Flux
   ansible.builtin.include_role:
     name: flux
+  tags: flux
 
 - name: Install GitHub Actions Runner and integrate with Flux repos
   ansible.builtin.include_role:
     name: github_actions
+  tags: github_actions
 
 - name: Install Monitoring (Prometheus & Grafana)
   ansible.builtin.include_role:
     name: monitoring
+  tags: monitoring
 
 - name: Install Mailu
   ansible.builtin.include_role:
     name: mailu
   when: install_mailu_for_smtp
+  tags: mailu
