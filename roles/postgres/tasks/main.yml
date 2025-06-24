@@ -28,6 +28,10 @@
           enabled: true
           storageClass: "{{ postgres_storage_class }}"
           size: "{{ postgres_storage_size }}"
+        initdb:
+          scripts:
+            pgvector.sql: |
+              CREATE EXTENSION IF NOT EXISTS vector;
     wait: true
     timeout: 5m
   register: postgres_helm_result
@@ -82,7 +86,7 @@
         restartPolicy: Never
         containers:
           - name: psql
-            image: "docker.io/bitnami/postgresql:{{ postgres_image_tag }}"
+            image: "docker.io/bitnami/postgresql:{{ postgres_client_pod_image_tag }}"
             env:
               - name: PGPASSWORD
                 value: "{{ postgres_admin_password }}"
@@ -167,7 +171,7 @@
         restartPolicy: Never
         containers:
           - name: psql
-            image: "docker.io/bitnami/postgresql:{{ postgres_image_tag }}"
+            image: "docker.io/bitnami/postgresql:{{ postgres_client_pod_image_tag }}"
             env:
               - name: PGPASSWORD
                 value: "{{ postgres_admin_password }}"
