@@ -6,6 +6,7 @@ collections:
   - name: k3s.orchestration
     type: git
     source: https://github.com/k3s-io/k3s-ansible.git
+  - name: community.postgresql
 
 roles:
   - name: geerlingguy.docker

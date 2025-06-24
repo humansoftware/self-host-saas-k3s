@@ -36,7 +36,11 @@ echo "Flux UI: http://localhost:9001 (admin/<your password>)"
 
 # Forward Mailu Admin UI
 kubectl -n mailu port-forward svc/mailu-admin 8082:8080 &
-echo "Mailu Admin: http://localhost:8082 (admin/<your password>)"
+echo "Mailu Admin: http://localhost:8082/admin (admin/<your password>)"
+
+# Port-forward Postgres service to local port 15432 instead of 5432
+kubectl port-forward svc/postgres-postgresql -n postgres 15432:5432 &
+echo "Postgres: localhost:15432 (user: postgres, see secrets for password)"
 
 # Wait for background jobs
 wait

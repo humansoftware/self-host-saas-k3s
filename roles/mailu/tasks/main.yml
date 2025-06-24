@@ -75,11 +75,24 @@
     mode: '0644'
   when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
 
+# Avoid hitting Let's Encrypt rate limits: only create the Certificate if it does not already exist
+- name: Check if Mailu certificate already exists
+  kubernetes.core.k8s_info:
+    api_version: cert-manager.io/v1
+    kind: Certificate
+    namespace: mailu
+    name: mailu-certificates
+  register: mailu_cert_info
+  failed_when: false
+  changed_when: false
+
 - name: Apply Mailu cert-manager Certificate manifest
   kubernetes.core.k8s:
     state: present
     src: "/tmp/mailu-certificate.yaml"
-  when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
+  when:
+    - self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
+    - mailu_cert_info.resources | length == 0
 
 - name: Install Mailu using Helm for enabled projects (public SMTP)
   kubernetes.core.helm:

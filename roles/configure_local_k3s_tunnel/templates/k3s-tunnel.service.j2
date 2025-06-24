@@ -3,8 +3,9 @@ Description=K3s SSH Tunnel
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/ssh -F /home/{{ ansible_user_id }}/.ssh/k3s_tunnel_config -N k3s-tunnel
+ExecStart=/usr/bin/ssh -F %h/.ssh/k3s_tunnel_config -N k3s-tunnel
 Restart=always
+RestartSec=10
 
 [Install]
 WantedBy=default.target

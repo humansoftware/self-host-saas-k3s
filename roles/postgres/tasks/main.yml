@@ -1,0 +1,227 @@
+---
+# tasks file for postgres
+- name: Create namespace for Postgres
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ postgres_namespace }}"
+
+- name: Set Postgres databases from self_saas_projects
+  ansible.builtin.set_fact:
+    postgres_databases: "{{ self_saas_projects | map(attribute='name') | list }}"
+
+- name: Install Bitnami Postgres via Helm
+  kubernetes.core.helm:
+    name: "{{ postgres_release_name }}"
+    chart_ref: "{{ postgres_chart }}"
+    chart_version: "{{ postgres_chart_version }}"
+    release_namespace: "{{ postgres_namespace }}"
+    create_namespace: false
+    values:
+      global:
+        storageClass: "{{ postgres_storage_class }}"
+      auth:
+        postgresPassword: "{{ postgres_admin_password }}"
+        databases: "{{ postgres_databases }}"
+      primary:
+        persistence:
+          enabled: true
+          storageClass: "{{ postgres_storage_class }}"
+          size: "{{ postgres_storage_size }}"
+    wait: true
+    timeout: 5m
+  register: postgres_helm_result
+
+- name: Debug Postgres Helm result
+  ansible.builtin.debug:
+    var: postgres_helm_result
+
+- name: Render project database SQL from template
+  ansible.builtin.template:
+    src: create_project_databases.sql.j2
+    dest: /tmp/create_project_databases.sql
+    mode: '0600'
+  delegate_to: localhost
+  run_once: true
+
+- name: Create ConfigMap for project database SQL
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: project-databases-sql
+        namespace: "{{ postgres_namespace }}"
+      data:
+        create_project_databases.sql: |
+          {{ lookup('file', '/tmp/create_project_databases.sql') | indent(10) }}
+  delegate_to: localhost
+  run_once: true
+
+- name: Ensure previous psql-client-db pod is absent before creation
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Pod
+    name: psql-client-db
+    namespace: "{{ postgres_namespace }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Run database creation SQL in a temporary Postgres client pod
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: psql-client-db
+        namespace: "{{ postgres_namespace }}"
+      spec:
+        restartPolicy: Never
+        containers:
+          - name: psql
+            image: "docker.io/bitnami/postgresql:{{ postgres_image_tag }}"
+            env:
+              - name: PGPASSWORD
+                value: "{{ postgres_admin_password }}"
+            command: ["psql"]
+            args:
+              - "-h"
+              - "postgres-postgresql"
+              - "-U"
+              - "postgres"
+              - "-f"
+              - "/tmp/create_project_databases.sql"
+            volumeMounts:
+              - name: sql
+                mountPath: /tmp/create_project_databases.sql
+                subPath: create_project_databases.sql
+        volumes:
+          - name: sql
+            configMap:
+              name: project-databases-sql
+              items:
+                - key: create_project_databases.sql
+                  path: create_project_databases.sql
+  delegate_to: localhost
+  run_once: true
+
+- name: Wait for psql-client-db pod to complete
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ postgres_namespace }}"
+    name: psql-client-db
+  register: pod_info_db
+  until: pod_info_db.resources[0].status.phase == 'Succeeded'
+  retries: 5
+  delay: 6
+  delegate_to: localhost
+  run_once: true
+
+- name: Render project user SQL from template
+  ansible.builtin.template:
+    src: create_project_users.sql.j2
+    dest: /tmp/create_project_users.sql
+    mode: '0600'
+  delegate_to: localhost
+  run_once: true
+
+- name: Create ConfigMap for project user SQL
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: project-users-sql
+        namespace: "{{ postgres_namespace }}"
+      data:
+        create_project_users.sql: |
+          {{ lookup('file', '/tmp/create_project_users.sql') | indent(10) }}
+  delegate_to: localhost
+  run_once: true
+
+- name: Ensure previous psql-client pod is absent before creation
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Pod
+    name: psql-client
+    namespace: "{{ postgres_namespace }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Run user creation SQL in a temporary Postgres client pod
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: psql-client
+        namespace: "{{ postgres_namespace }}"
+      spec:
+        restartPolicy: Never
+        containers:
+          - name: psql
+            image: "docker.io/bitnami/postgresql:{{ postgres_image_tag }}"
+            env:
+              - name: PGPASSWORD
+                value: "{{ postgres_admin_password }}"
+            command: ["psql"]
+            args:
+              - "-h"
+              - "postgres-postgresql"
+              - "-U"
+              - "postgres"
+              - "-f"
+              - "/tmp/create_project_users.sql"
+            volumeMounts:
+              - name: sql
+                mountPath: /tmp/create_project_users.sql
+                subPath: create_project_users.sql
+        volumes:
+          - name: sql
+            configMap:
+              name: project-users-sql
+              items:
+                - key: create_project_users.sql
+                  path: create_project_users.sql
+  delegate_to: localhost
+  run_once: true
+
+- name: Wait for psql-client pod to complete
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ postgres_namespace }}"
+    name: psql-client
+  register: pod_info
+  until: pod_info.resources[0].status.phase == 'Succeeded'
+  retries: 5
+  delay: 6
+  delegate_to: localhost
+  run_once: true
+
+- name: Clean up psql-client pod
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Pod
+    name: psql-client
+    namespace: "{{ postgres_namespace }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Clean up project user SQL ConfigMap
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: ConfigMap
+    name: project-users-sql
+    namespace: "{{ postgres_namespace }}"
+  delegate_to: localhost
+  run_once: true

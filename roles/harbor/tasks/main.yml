@@ -17,6 +17,17 @@
       spec:
         selfSigned: {}
 
+# Avoid hitting Let's Encrypt rate limits: only create the Certificate if it does not already exist
+- name: Check if Harbor certificate already exists
+  kubernetes.core.k8s_info:
+    api_version: cert-manager.io/v1
+    kind: Certificate
+    namespace: "{{ harbor_namespace }}"
+    name: "{{ harbor_secret_name }}"
+  register: harbor_cert_info
+  failed_when: false
+  changed_when: false
+
 - name: Create Certificate for harbor.local using self-signed issuer
   kubernetes.core.k8s:
     state: present
@@ -33,6 +44,7 @@
         issuerRef:
           name: harbor-selfsigned
           kind: ClusterIssuer
+  when: harbor_cert_info.resources | length == 0
 
 # Actual Harbor installation
 - name: Add Harbor Helm repository

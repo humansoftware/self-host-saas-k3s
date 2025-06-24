@@ -1,0 +1,4 @@
+{% for project in self_saas_projects if project.postgres is defined %}
+-- Create database (ignore error if exists)
+CREATE DATABASE "{{ project.name }}";
+{% endfor %}

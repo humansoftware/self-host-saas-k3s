@@ -1,0 +1,15 @@
+{% for project in self_saas_projects if project.postgres is defined %}
+-- Create user if not exists
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '{{ project.postgres.username }}') THEN
+    CREATE USER {{ project.postgres.username | quote }} WITH PASSWORD '{{ project.postgres.password }}';
+  END IF;
+END$$;
+
+-- Always set password
+ALTER USER {{ project.postgres.username | quote }} WITH PASSWORD '{{ project.postgres.password }}';
+
+-- Grant privileges
+GRANT ALL PRIVILEGES ON DATABASE "{{ project.name }}" TO {{ project.postgres.username | quote }};
+{% endfor %}
