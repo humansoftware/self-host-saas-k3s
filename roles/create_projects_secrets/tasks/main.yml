@@ -1,0 +1,41 @@
+---
+# tasks file for create_projects_secrets
+- name: Ensure project namespace exists
+  kubernetes.core.k8s:
+    state: present
+    api_version: v1
+    kind: Namespace
+    name: "{{ item.name }}"
+  loop: "{{ self_saas_projects }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Render secret data for each project using template
+  ansible.builtin.set_fact:
+    project_secret_data: "{{ lookup('template', 'roles/create_projects_secrets/templates/project_secret.yaml.j2') | from_yaml }}"
+  loop: "{{ self_saas_projects }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: secret_data_results
+
+- name: Build zipped list of projects and secret data
+  ansible.builtin.set_fact:
+    projects_with_secrets: "{{ projects_with_secrets | default([]) + [ [item.0, item.1] ] }}"
+  with_together:
+    - "{{ self_saas_projects }}"
+    - "{{ secret_data_results.results }}"
+
+- name: Create project secrets for each self-hosted SaaS project
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ item.0.name }}-secrets"
+        namespace: "{{ item.0.name }}"
+      type: Opaque
+      stringData: "{{ item.1.ansible_facts.project_secret_data | from_yaml }}"
+  loop: "{{ projects_with_secrets }}"
+  loop_control:
+    label: "{{ item.0.name }}"
