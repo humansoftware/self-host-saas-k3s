@@ -72,3 +72,89 @@
     state: present
     src: "{{ item.dest }}"
   loop: "{{ rendered_runner_deployments.results }}"
+
+# Steps to allow running kubectl commands in GitHub Actions workflows
+- name: Create ServiceAccount for GitHub Actions runners
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: github-actions-runner
+        namespace: actions-runner-system
+
+- name: Create ClusterRole for GitHub Actions runners (admin access)
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: github-actions-runner-admin
+      rules:
+        - apiGroups: ["*"]
+          resources: ["*"]
+          verbs: ["*"]
+
+- name: Bind ServiceAccount to ClusterRole
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: github-actions-runner-admin-binding
+      subjects:
+        - kind: ServiceAccount
+          name: github-actions-runner
+          namespace: actions-runner-system
+      roleRef:
+        kind: ClusterRole
+        name: github-actions-runner-admin
+        apiGroup: rbac.authorization.k8s.io
+
+- name: Create ServiceAccount, Role, and RoleBinding for each project
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: "github-actions-runner-{{ item.name }}"
+        namespace: "{{ item.name }}"
+  loop: "{{ self_saas_projects }}"
+
+- name: Create Role for kubectl access in project namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: github-actions-runner-role
+        namespace: "{{ item.name }}"
+      rules:
+        - apiGroups: ["*"]
+          resources: ["*"]
+          verbs: ["*"]
+  loop: "{{ self_saas_projects }}"
+
+- name: Bind ServiceAccount to Role in project namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: github-actions-runner-rolebinding
+        namespace: "{{ item.name }}"
+      subjects:
+        - kind: ServiceAccount
+          name: "github-actions-runner-{{ item.name }}"
+          namespace: "{{ item.name }}"
+      roleRef:
+        kind: Role
+        name: github-actions-runner-role
+        apiGroup: rbac.authorization.k8s.io
+  loop: "{{ self_saas_projects }}"

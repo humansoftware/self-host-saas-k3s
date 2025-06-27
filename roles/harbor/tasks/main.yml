@@ -46,6 +46,27 @@
           kind: ClusterIssuer
   when: harbor_cert_info.resources | length == 0
 
+- name: Get Harbor TLS secret after certificate creation
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ harbor_namespace }}"
+    name: "{{ harbor_tls_secret_name }}"
+  register: harbor_tls_secret
+
+- name: Create harbor-ca secret in each project namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: harbor-ca
+        namespace: "{{ item.name }}"
+      data:
+        ca.crt: "{{ harbor_tls_secret.resources[0].data['ca.crt'] }}"
+  loop: "{{ self_saas_projects }}"
+
 # Actual Harbor installation
 - name: Add Harbor Helm repository
   kubernetes.core.helm_repository:

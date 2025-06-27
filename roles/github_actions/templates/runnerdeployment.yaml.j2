@@ -2,11 +2,12 @@ apiVersion: actions.summerwind.dev/v1alpha1
 kind: RunnerDeployment
 metadata:
   name: {{ item.name }}-runner
-  namespace: actions-runner-system
+  namespace: {{ item.name }}
 spec:
   replicas: 1
   template:
     spec:
+      serviceAccountName: github-actions-runner-{{ item.name }}
       repository: {{ item.github_repo_http_url | regex_replace('^https://github.com/', '') | regex_replace('.git$', '') }}
       labels:
         - self-hosted

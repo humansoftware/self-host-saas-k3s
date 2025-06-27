@@ -1,0 +1,7 @@
+{
+  "auths": {
+    "{{ harbor_registry | default('harbor.local') }}": {
+      "auth": "{{ (harbor_admin_username | default('admin') ~ ':' ~ harbor_admin_password) | b64encode }}"
+    }
+  }
+}
