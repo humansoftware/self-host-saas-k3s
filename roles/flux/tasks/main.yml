@@ -29,6 +29,16 @@
         password: "{{ github_pat }}"
     wait: true
 
+- name: Ensure app namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ item.name }}"
+  loop: "{{ self_saas_projects }}"
+
 - name: Create GitRepository for each app repo
   kubernetes.core.k8s:
     state: present
@@ -37,7 +47,7 @@
       kind: GitRepository
       metadata:
         name: "{{ item.name }}"
-        namespace: flux-system
+        namespace: "{{ item.name }}"
       spec:
         interval: "{{ flux_git_repo_interval }}"
         url: "{{ item.github_repo_http_url }}"
@@ -55,7 +65,7 @@
       kind: Kustomization
       metadata:
         name: "{{ item.name }}"
-        namespace: flux-system
+        namespace: "{{ item.name }}"
       spec:
         interval: "{{ flux_kustomization_interval }}"
         path: "{{ item.path }}"
@@ -63,6 +73,7 @@
         sourceRef:
           kind: GitRepository
           name: "{{ item.name }}"
+          namespace: "{{ item.name }}"
         validation: client
   loop: "{{ self_saas_projects }}"
 
@@ -110,7 +121,7 @@
       kind: Provider
       metadata:
         name: "github-provider-{{ item.name }}"
-        namespace: flux-system
+        namespace: "{{ item.name }}"
       spec:
         type: github
         address: "{{ item.github_repo_http_url }}"
@@ -126,7 +137,7 @@
       kind: Alert
       metadata:
         name: "github-alert-{{ item.name }}"
-        namespace: flux-system
+        namespace: "{{ item.name }}"
       spec:
         providerRef:
           name: "github-provider-{{ item.name }}"
@@ -134,7 +145,7 @@
         eventSources:
           - kind: Kustomization
             name: "{{ item.name }}"
-            namespace: flux-system
+            namespace: "{{ item.name }}"
         suspend: false
         eventMetadata:
           summary: "Flux status for {{ item.name }}"
