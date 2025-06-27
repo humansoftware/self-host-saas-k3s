@@ -12,6 +12,8 @@
     state: present
     set_values:
       - value: notificationController.enabled=true
+      - value: imageAutomationController.enabled=true
+      - value: imageReflectorController.enabled=true
 
 - name: Create GitHub token secret for Flux (HTTPS auth)
   kubernetes.core.k8s:
