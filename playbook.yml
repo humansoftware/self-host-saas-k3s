@@ -55,6 +55,9 @@
       tags: mailu
     - role: postgres
       tags: postgres
+    - role: cassandra
+      when: install_cassandra
+      tags: cassandra
     - role: create_projects_secrets
       tags: create_projects_secrets
 

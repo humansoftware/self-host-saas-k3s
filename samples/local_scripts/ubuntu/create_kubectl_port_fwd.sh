@@ -42,5 +42,9 @@ echo "Mailu Admin: http://localhost:8082/admin (admin/<your password>)"
 kubectl port-forward svc/postgres-postgresql -n postgres 15432:5432 &
 echo "Postgres: localhost:15432 (user: postgres, see secrets for password)"
 
+# Port-forward Cassandra service to local port 9042
+kubectl port-forward svc/cassandra -n cassandra 9042:9042 &
+echo "Cassandra: localhost:9042"
+
 # Wait for background jobs
 wait
