@@ -14,3 +14,5 @@
       - value: notificationController.enabled=true
       - value: imageAutomationController.enabled=true
       - value: imageReflectorController.enabled=true
+    wait: true
+    wait_timeout: "{{ helm_install_timeout }}"

@@ -15,5 +15,5 @@ elasticsearch_chart_version: 8.14.0 # Check for the latest stable version
 elasticsearch_local_port: 9200
 
 # Authentication
-elasticsearch_username: "elastic"
-elasticsearch_password: "changeme"
+elasticsearch_admin_username: "elastic"
+elasticsearch_admin_password: "changeme"

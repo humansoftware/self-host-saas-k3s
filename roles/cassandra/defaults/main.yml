@@ -13,3 +13,6 @@ cassandra_chart_version: 11.1.0 # Check for the latest stable version
 
 # Port for local access
 cassandra_local_port: 9042
+
+cassandra_admin_username: "cassandra_admin"
+cassandra_admin_password: "changeme"

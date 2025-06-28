@@ -1,0 +1,83 @@
+---
+- name: Create Elasticsearch user and role for project
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: "elasticsearch-user-creator-{{ item.name | lower | regex_replace('[^a-z0-9-]', '-') }}"
+        namespace: "{{ elasticsearch_namespace }}"
+      spec:
+        backoffLimit: 1
+        template:
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: curl
+                image: curlimages/curl:8.7.1
+                command:
+                  - sh
+                  - -c
+                  - |
+                    # Create role
+                    curl -X PUT "http://elasticsearch-master:9200/_security/role/{{ item.name | lower | regex_replace('[^a-z0-9_]', '_') }}-role" \
+                      -u "{{ elasticsearch_admin_username }}:{{ elasticsearch_admin_password }}" \
+                      -H 'Content-Type: application/json' -d '
+                      {
+                        "cluster": ["monitor"],
+                        "indices": [
+                          {
+                            "names": [ "{{ item.name | lower | regex_replace('[^a-z0-9_]', '_') }}" ],
+                            "privileges": ["all"]
+                          }
+                        ]
+                      }'
+
+                    # Create user and assign role
+                    curl -X POST "http://elasticsearch-master:9200/_security/user/{{ item.elasticsearch.username }}" \
+                      -u "{{ elasticsearch_admin_username }}:{{ elasticsearch_admin_password }}" \
+                      -H 'Content-Type: application/json' -d '
+                      {
+                        "password" : "{{ item.elasticsearch.password }}",
+                        "roles" : [ "{{ item.name | lower | regex_replace('[^a-z0-9_]', '_') }}-role" ]
+                      }'
+                env:
+                  - name: ELASTICSEARCH_ADMIN_USERNAME
+                    value: "{{ elasticsearch_admin_username }}"
+                  - name: ELASTICSEARCH_ADMIN_PASSWORD
+                    value: "{{ elasticsearch_admin_password }}"
+    delegate_to: localhost
+    run_once: true
+  loop: "{{ self_saas_projects | selectattr('elasticsearch.enabled', 'defined') | selectattr('elasticsearch.enabled') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Wait for Elasticsearch user creation job to complete
+  kubernetes.core.k8s_info:
+    api_version: batch/v1
+    kind: Job
+    namespace: "{{ elasticsearch_namespace }}"
+    name: "elasticsearch-user-creator-{{ item.name | lower | regex_replace('[^a-z0-9-]', '-') }}"
+  register: job_info
+  until: job_info.resources[0].status.succeeded is defined and job_info.resources[0].status.succeeded > 0
+  retries: 10
+  delay: 10
+  delegate_to: localhost
+  run_once: true
+  loop: "{{ self_saas_projects | selectattr('elasticsearch.enabled', 'defined') | selectattr('elasticsearch.enabled') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Clean up Elasticsearch user creation job
+  kubernetes.core.k8s:
+    state: absent
+    api_version: batch/v1
+    kind: Job
+    name: "elasticsearch-user-creator-{{ item.name | lower | regex_replace('[^a-z0-9-]', '-') }}"
+    namespace: "{{ elasticsearch_namespace }}"
+  delegate_to: localhost
+  run_once: true
+  loop: "{{ self_saas_projects | selectattr('elasticsearch.enabled', 'defined') | selectattr('elasticsearch.enabled') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
