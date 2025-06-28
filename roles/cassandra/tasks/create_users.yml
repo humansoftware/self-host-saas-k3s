@@ -44,7 +44,7 @@
             restartPolicy: Never
             containers:
               - name: cqlsh
-                image: bitnami/cassandra:{{ cassandra_chart_version }}
+                image: bitnami/cassandra:{{ cassandra_image_version }}
                 command: ["cqlsh"]
                 args:
                   - "-u"
