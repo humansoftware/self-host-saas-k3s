@@ -1,0 +1,55 @@
+# Notifications
+- name: Create GitHub token secret for Flux Notifications
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: flux-notify-auth
+        namespace: flux-system
+      stringData:
+        token: "{{ github_pat }}"
+    wait: true
+
+- name: Create Flux GitHub Provider for each app repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: notification.toolkit.fluxcd.io/v1beta3
+      kind: Provider
+      metadata:
+        name: "github-provider-{{ item.name }}"
+        namespace: "{{ item.name }}"
+      spec:
+        type: github
+        address: "{{ item.github_repo_http_url }}"
+        secretRef:
+          name: flux-notify-auth
+  loop: "{{ self_saas_projects }}"
+
+- name: Create Flux Alert for each app repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: notification.toolkit.fluxcd.io/v1beta3
+      kind: Alert
+      metadata:
+        name: "github-alert-{{ item.name }}"
+        namespace: "{{ item.name }}"
+      spec:
+        providerRef:
+          name: "github-provider-{{ item.name }}"
+        eventSeverity: info
+        eventSources:
+          - kind: Kustomization
+            name: "{{ item.name }}"
+            namespace: "{{ item.name }}"
+        suspend: false
+        eventMetadata:
+          summary: "Flux status for {{ item.name }}"
+        statusTemplate: |
+          {% raw %}{{ .Message }} — [View on Weave-Gitops](https://localhost:9001/kustomizations/flux-system/{% endraw %}{{ item.name }}{% raw %}){% endraw %}
+
+
+  loop: "{{ self_saas_projects }}"

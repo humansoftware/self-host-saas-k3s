@@ -1,0 +1,135 @@
+- name: Ensure localhost rule exists in Harbor Ingress
+  kubernetes.core.k8s_json_patch:
+    api_version: networking.k8s.io/v1
+    kind: Ingress
+    name: harbor-ingress
+    namespace: "{{ harbor_namespace }}"
+    patch:
+      - op: add
+        path: /spec/rules/-
+        value:
+          host: localhost
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: harbor-portal
+                    port:
+                      number: 80
+  failed_when:
+    - result is failed
+    - "'already exists' not in (result.stderr | default(''))"
+  register: result
+
+- name: Patch Harbor Ingress to add full localhost rules
+  kubernetes.core.k8s_json_patch:
+    api_version: networking.k8s.io/v1
+    kind: Ingress
+    name: harbor-ingress
+    namespace: "{{ harbor_namespace }}"
+    patch:
+      - op: replace
+        path: /spec/rules/1/http/paths
+        value:
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: harbor-core
+                port:
+                  number: 80
+          - path: /service/
+            pathType: Prefix
+            backend:
+              service:
+                name: harbor-core
+                port:
+                  number: 80
+          - path: /v2/
+            pathType: Prefix
+            backend:
+              service:
+                name: harbor-core
+                port:
+                  number: 80
+          - path: /c/
+            pathType: Prefix
+            backend:
+              service:
+                name: harbor-core
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: harbor-portal
+                port:
+                  number: 80
+
+- name: Get Traefik service ClusterIP
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Service
+    namespace: kube-system
+    name: traefik
+  register: traefik_svc
+
+- name: Get current CoreDNS ConfigMap
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    namespace: kube-system
+    name: coredns
+  register: coredns_cm
+
+- name: Add harbor.local to CoreDNS NodeHosts (idempotent)
+  ansible.builtin.set_fact:
+    new_nodehosts: |
+      {% set traefik_ip = traefik_svc.resources[0].spec.clusterIP %}
+      {% set nodehosts = coredns_cm.resources[0].data.get('NodeHosts', '') %}
+      {% if 'harbor.local' in nodehosts %}
+      {{ nodehosts }}
+      {% else %}
+      {{ nodehosts }}
+      {{ traefik_ip }} harbor.local
+      {% endif %}
+
+- name: Patch CoreDNS ConfigMap NodeHosts to resolve harbor.local (idempotent)
+  kubernetes.core.k8s:
+    state: present
+    kind: ConfigMap
+    api_version: v1
+    name: coredns
+    namespace: kube-system
+    definition:
+      data:
+        NodeHosts: "{{ new_nodehosts }}"
+
+- name: Restart CoreDNS pods to apply DNS changes
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Pod
+    namespace: kube-system
+    label_selectors:
+      - k8s-app=kube-dns
+    state: absent
+
+- name: Wait for CoreDNS pod to be ready
+  retries: 20
+  delay: 5
+  until: >
+    coredns_status.resources[0].status.conditions
+    | selectattr('type', 'equalto', 'Ready')
+    | map(attribute='status')
+    | list
+    | first == "True"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: kube-system
+    label_selectors:
+      - k8s-app=kube-dns
+  register: coredns_status

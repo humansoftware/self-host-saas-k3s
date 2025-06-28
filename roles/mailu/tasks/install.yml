@@ -1,0 +1,59 @@
+- name: Install Mailu using Helm for enabled projects (public SMTP)
+  kubernetes.core.helm:
+    name: "mailu"
+    chart_ref: mailu/mailu
+    release_namespace: mailu
+    values:
+      hostnames: "{{ self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | map(attribute='smtp.domain') | list }}"
+      domain: "{{ mailu_main_domain }}"
+      admin:
+        enabled: "{{ mailu_enable_admin | default(true) }}"
+      service:
+        smtp:
+          type: LoadBalancer
+        submission:
+          type: LoadBalancer
+        smtps:
+          type: LoadBalancer
+      initialAccount:
+        enabled: true
+        username: "{{ mailu_admin_username }}"
+        password: "{{ mailu_admin_password }}"
+        domain: "{{ mailu_main_domain }}"
+        mode: "update"
+      persistence:
+        enabled: true
+        storageClass: "{{ mailu_storage_class }}"
+        size: "{{ mailu_persistence_size }}"
+      redis:
+        master:
+          persistence:
+            enabled: true
+            size: "{{ mailu_redis_size }}"
+      clamav:
+        enabled: "{{ mailu_enable_clamav | default(false) }}"
+        persistence:
+          enabled: true
+          size: "{{ mailu_clamav_size }}"
+      oletools:
+        enabled: "{{ mailu_enable_oletools | default(false) }}"
+      tika:
+        enabled: "{{ mailu_enable_tika | default(false) }}"
+      imap:
+        enabled: false
+      pop3:
+        enabled: false
+      webmail:
+        enabled: false
+      antivirus:
+        enabled: false
+      front:
+        hostPort:
+          enabled: false
+        externalService:
+          enabled: true
+          type: LoadBalancer
+          externalTrafficPolicy: Local
+    wait: true
+    wait_timeout: 5m
+  when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0

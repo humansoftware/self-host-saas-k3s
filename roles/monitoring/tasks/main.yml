@@ -1,64 +1,12 @@
-- name: Create namespace
-  kubernetes.core.k8s:
-    api_version: v1
-    kind: Namespace
-    name: "{{ monitoring_namespace }}"
-  when: prometheus_enabled or grafana_enabled
+---
+- name: Setup monitoring namespace
+  ansible.builtin.include_tasks: setup_namespace.yml
 
-- name: Add Helm repos
-  ansible.builtin.shell: |
-    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
-    helm repo add grafana https://grafana.github.io/helm-charts || true
-    helm repo update
-  changed_when: false
+- name: Add monitoring Helm repos
+  ansible.builtin.include_tasks: add_helm_repos.yml
 
-- name: Install Prometheus using Helm
-  when: prometheus_enabled
-  kubernetes.core.helm:
-    name: prometheus
-    chart_ref: prometheus-community/prometheus
-    release_namespace: "{{ monitoring_namespace }}"
-    create_namespace: false
-    values:
-      prometheus:
-        storageSpec:
-          volumeClaimTemplate:
-            spec:
-              storageClassName: "{{ prometheus_storage_class }}"
-              accessModes: ["ReadWriteOnce"]
-              resources:
-                requests:
-                  storage: "{{ prometheus_storage_size }}"
-      alertmanager:
-        enabled: "{{ prometheus_alertmanager_enabled }}"
-        alertmanagerSpec:
-          storage:
-            volumeClaimTemplate:
-              spec:
-                storageClassName: "{{ prometheus_storage_class }}"
-                accessModes: ["ReadWriteOnce"]
-                resources:
-                  requests:
-                    storage: "{{ prometheus_alertmanager_storage_size }}"
-    wait: true
-    wait_timeout: 5m
+- name: Install Prometheus
+  ansible.builtin.include_tasks: install_prometheus.yml
 
-- name: Install Grafana using Helm
-  when: grafana_enabled
-  kubernetes.core.helm:
-    name: grafana
-    chart_ref: grafana/grafana
-    release_namespace: "{{ monitoring_namespace }}"
-    values:
-      persistence:
-        enabled: true
-        storageClassName: "{{ grafana_storage_class }}"
-        accessModes:
-          - ReadWriteOnce
-        size: "{{ grafana_storage_size }}"
-      adminUser: "{{ grafana_admin_user }}"
-      adminPassword: "{{ grafana_admin_password }}"
-      service:
-        type: ClusterIP
-    wait: true
-    wait_timeout: 5m
+- name: Install Grafana
+  ansible.builtin.include_tasks: install_grafana.yml

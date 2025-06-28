@@ -1,0 +1,21 @@
+- name: Get Harbor TLS secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ harbor_namespace }}"
+    name: "{{ harbor_tls_secret_name }}"
+  register: harbor_tls_secret
+
+- name: Deploy GitHub Actions Runner for each app repo
+  ansible.builtin.template:
+    src: runnerdeployment.yaml.j2
+    dest: "/tmp/runnerdeployment_{{ item.name }}.yaml"
+    mode: '0644'
+  loop: "{{ self_saas_projects }}"
+  register: rendered_runner_deployments
+
+- name: Apply runner deployments
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ item.dest }}"
+  loop: "{{ rendered_runner_deployments.results }}"
