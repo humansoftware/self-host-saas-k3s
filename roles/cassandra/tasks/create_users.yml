@@ -1,4 +1,20 @@
 ---
+- name: Get Cassandra admin password from secret
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ cassandra_namespace }}"
+    name: cassandra
+  register: cassandra_secret_info
+  delegate_to: localhost
+  become: false
+
+- name: Set Cassandra admin password fact
+  ansible.builtin.set_fact:
+    cassandra_admin_password_decoded: "{{ cassandra_secret_info.resources[0].data['cassandra-password'] | b64decode }}"
+  delegate_to: localhost
+  become: false
+
 - name: Render Cassandra user creation SQL from template
   ansible.builtin.template:
     src: create_user.cql.j2
@@ -50,7 +66,7 @@
                   - "-u"
                   - "{{ cassandra_admin_username }}"
                   - "-p"
-                  - "{{ cassandra_admin_password }}"
+                  - "{{ cassandra_admin_password_decoded }}"
                   - "-f"
                   - "/tmp/create_user.cql"
                   - "cassandra"
