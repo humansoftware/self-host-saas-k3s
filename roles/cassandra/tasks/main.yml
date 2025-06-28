@@ -25,6 +25,8 @@
         size: "{{ cassandra_storage_size }}"
       auth:
         enabled: true
+        username: "{{ cassandra_admin_username }}"
+        password: "{{ cassandra_admin_password }}"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
 
