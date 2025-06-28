@@ -1,0 +1,16 @@
+- name: Add FluxCD Helm repository
+  kubernetes.core.helm_repository:
+    name: fluxcd
+    repo_url: https://fluxcd-community.github.io/helm-charts
+
+- name: Install Flux via Helm
+  kubernetes.core.helm:
+    name: flux
+    chart_ref: fluxcd/flux2
+    release_namespace: flux-system
+    create_namespace: true
+    state: present
+    set_values:
+      - value: notificationController.enabled=true
+      - value: imageAutomationController.enabled=true
+      - value: imageReflectorController.enabled=true

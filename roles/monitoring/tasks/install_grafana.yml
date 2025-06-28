@@ -1,0 +1,19 @@
+- name: Install Grafana using Helm
+  when: grafana_enabled
+  kubernetes.core.helm:
+    name: grafana
+    chart_ref: grafana/grafana
+    release_namespace: "{{ monitoring_namespace }}"
+    values:
+      persistence:
+        enabled: true
+        storageClassName: "{{ grafana_storage_class }}"
+        accessModes:
+          - ReadWriteOnce
+        size: "{{ grafana_storage_size }}"
+      adminUser: "{{ grafana_admin_user }}"
+      adminPassword: "{{ grafana_admin_password }}"
+      service:
+        type: ClusterIP
+    wait: true
+    wait_timeout: 5m

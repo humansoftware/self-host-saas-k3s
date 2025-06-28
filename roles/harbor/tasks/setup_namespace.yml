@@ -1,0 +1,6 @@
+- name: Create Harbor namespace
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ harbor_namespace }}"
+    state: present

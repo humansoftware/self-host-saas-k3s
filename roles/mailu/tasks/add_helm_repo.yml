@@ -1,0 +1,5 @@
+- name: Add Mailu Helm repo
+  ansible.builtin.shell: |
+    helm repo add mailu https://mailu.github.io/helm-charts || true
+    helm repo update
+  changed_when: false

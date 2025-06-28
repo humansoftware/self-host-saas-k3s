@@ -1,0 +1,36 @@
+- name: Ensure cert-manager namespace exists
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ cert_manager_namespace }}"
+    state: present
+
+- name: Download cert-manager CRDs
+  ansible.builtin.get_url:
+    url: "{{ cert_manager_crds_url }}"
+    dest: "/tmp/cert-manager-crds.yaml"
+    mode: '0644'
+  register: crd_download
+
+- name: Apply cert-manager CRDs
+  kubernetes.core.k8s:
+    state: present
+    src: "/tmp/cert-manager-crds.yaml"
+
+- name: Add Jetstack Helm repository
+  kubernetes.core.helm_repository:
+    name: jetstack
+    repo_url: "{{ cert_manager_helm_repo }}"
+
+- name: Install or upgrade cert-manager using Helm
+  kubernetes.core.helm:
+    name: "{{ cert_manager_release_name }}"
+    chart_ref: jetstack/{{ cert_manager_chart_name }}
+    chart_version: "{{ cert_manager_chart_version }}"
+    release_namespace: "{{ cert_manager_namespace }}"
+    create_namespace: false
+    values:
+      installCRDs: false
+    state: present
+    wait: true
+    timeout: 5m

@@ -1,0 +1,33 @@
+- name: Set Postgres databases from self_saas_projects
+  ansible.builtin.set_fact:
+    postgres_databases: "{{ self_saas_projects | map(attribute='name') | list }}"
+
+- name: Install Bitnami Postgres via Helm
+  kubernetes.core.helm:
+    name: "{{ postgres_release_name }}"
+    chart_ref: "{{ postgres_chart }}"
+    chart_version: "{{ postgres_chart_version }}"
+    release_namespace: "{{ postgres_namespace }}"
+    create_namespace: false
+    values:
+      global:
+        storageClass: "{{ postgres_storage_class }}"
+      auth:
+        postgresPassword: "{{ postgres_admin_password }}"
+        databases: "{{ postgres_databases }}"
+      primary:
+        persistence:
+          enabled: true
+          storageClass: "{{ postgres_storage_class }}"
+          size: "{{ postgres_storage_size }}"
+        initdb:
+          scripts:
+            pgvector.sql: |
+              CREATE EXTENSION IF NOT EXISTS vector;
+    wait: true
+    timeout: 5m
+  register: postgres_helm_result
+
+- name: Debug Postgres Helm result
+  ansible.builtin.debug:
+    var: postgres_helm_result

@@ -1,0 +1,6 @@
+- name: Add Helm repos
+  ansible.builtin.shell: |
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
+    helm repo add grafana https://grafana.github.io/helm-charts || true
+    helm repo update
+  changed_when: false

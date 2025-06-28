@@ -1,85 +1,9 @@
-- name: Ensure UFW is installed
-  ansible.builtin.apt:
-    name: ufw
-    state: present
-    update_cache: true
+---
+- name: Install UFW
+  ansible.builtin.include_tasks: install_ufw.yml
 
-- name: Check that the SSH public key exists on the control machine
-  delegate_to: localhost
-  become: false
-  ansible.builtin.stat:
-    path: "{{ ssh_public_key_to_authorize_on_target }}"
-  register: ssh_pubkey_stat
+- name: Configure SSH
+  ansible.builtin.include_tasks: configure_ssh.yml
 
-- name: Fail if the SSH public key does not exist on the control machine
-  delegate_to: localhost
-  ansible.builtin.fail:
-    msg: "The SSH public key file {{ ssh_public_key_to_authorize_on_target }} does not exist on the control machine."
-  when: not ssh_pubkey_stat.stat.exists
-
-- name: Ensure SSH public key is present for user 'ubuntu' on the remote machine
-  ansible.posix.authorized_key:
-    user: ubuntu
-    state: present
-    key: "{{ lookup('file', ssh_public_key_to_authorize_on_target) }}"
-
-- name: Disable SSH password authentication
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: '^#?PasswordAuthentication '
-    line: 'PasswordAuthentication no'
-    state: present
-    backup: true
-
-- name: Allow new SSH port in UFW
-  community.general.ufw:
-    rule: allow
-    port: "{{ ssh_port_rewritten | default(2222) }}"
-
-- name: Reload systemd manager configuration
-  ansible.builtin.systemd:
-    daemon_reload: true
-
-- name: Restart SSH service
-  ansible.builtin.service:
-    name: ssh
-    state: restarted
-
-- name: Allow HTTP
-  community.general.ufw:
-    rule: allow
-    port: 80
-
-- name: Allow HTTPS
-  community.general.ufw:
-    rule: allow
-    port: 443
-
-- name: Allow K3s API port if requested
-  community.general.ufw:
-    rule: allow
-    port: "{{ k3s_api_port | default(6443) }}"
-  when: firewall_open_k3s_ports | default(false)
-
-- name: Allow SMTP (25) in UFW
-  community.general.ufw:
-    rule: allow
-    port: 25
-    proto: tcp
-
-- name: Allow SMTPS (465) in UFW
-  community.general.ufw:
-    rule: allow
-    port: 465
-    proto: tcp
-
-- name: Allow Submission (587) in UFW
-  community.general.ufw:
-    rule: allow
-    port: 587
-    proto: tcp
-
-- name: Enable UFW
-  community.general.ufw:
-    state: enabled
-    policy: deny
+- name: Configure UFW
+  ansible.builtin.include_tasks: configure_ufw.yml

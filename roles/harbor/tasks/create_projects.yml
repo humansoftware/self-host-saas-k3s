@@ -1,0 +1,38 @@
+- name: Create Harbor project via Kubernetes Job (in-cluster)
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: create-harbor-project-{{ item.name | lower | regex_replace('[^a-z0-9-]', '-') }}
+        namespace: "{{ harbor_namespace }}"
+      spec:
+        backoffLimit: 1
+        template:
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: curl
+                image: curlimages/curl:8.7.1
+                command:
+                  - sh
+                  - -c
+                  - |
+                    curl -k -u admin:${HARBOR_ADMIN_PASSWORD} -X POST "https://{{ harbor_domain }}/api/v2.0/projects" \
+                      -H "Content-Type: application/json" \
+                      -d '{"project_name": "{{ item.name }}", "public": true}' \
+                      -w "\nHTTP_STATUS:%{http_code}\n" | tee /tmp/output.txt
+                env:
+                  - name: HARBOR_ADMIN_PASSWORD
+                    value: "{{ harbor_admin_password }}"
+  loop: "{{ self_saas_projects }}"
+
+- name: Delete Harbor project creation Jobs
+  kubernetes.core.k8s:
+    state: absent
+    api_version: batch/v1
+    kind: Job
+    name: "create-harbor-project-{{ item.name | lower | regex_replace('[^a-z0-9-]', '-') }}"
+    namespace: "{{ harbor_namespace }}"
+  loop: "{{ self_saas_projects }}"

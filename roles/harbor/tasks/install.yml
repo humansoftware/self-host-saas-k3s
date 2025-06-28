@@ -1,0 +1,43 @@
+# Actual Harbor installation
+- name: Add Harbor Helm repository
+  kubernetes.core.helm_repository:
+    name: harbor
+    repo_url: https://helm.goharbor.io
+
+- name: Install Harbor via Helm
+  kubernetes.core.helm:
+    name: harbor
+    chart_ref: harbor/harbor
+    release_namespace: "{{ harbor_namespace }}"
+    create_namespace: true
+    chart_version: "{{ harbor_version }}"
+    values:
+      expose:
+        type: ingress
+        ingress:
+          hosts:
+            core: "{{ harbor_domain }}"
+        tls:
+          enabled: true
+          certSource: "{{ harbor_tls_cert_source }}"
+          secret:
+            secretName: "{{ harbor_tls_secret_name }}"
+      externalURL: "{{ harbor_external_url }}"
+      harborAdminPassword: "{{ harbor_admin_password }}"
+      persistence:
+        enabled: true
+        storageClass: "{{ harbor_storage_class }}"
+        persistentVolumeClaim:
+          registry:
+            size: "{{ harbor_registry_size }}"
+          database:
+            size: "{{ harbor_database_size }}"
+          redis:
+            size: "{{ harbor_redis_size }}"
+          trivy:
+            size: "{{ harbor_trivy_size }}"
+          jobservice:
+            jobLog:
+              size: "{{ harbor_jobservice_size }}"
+    wait: true
+    wait_timeout: 5m

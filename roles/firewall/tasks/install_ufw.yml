@@ -1,0 +1,5 @@
+- name: Ensure UFW is installed
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true

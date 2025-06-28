@@ -1,0 +1,61 @@
+# Certificates for Harbor - requires cert-manager to be installed
+- name: Create self-signed ClusterIssuer for internal domains
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: harbor-selfsigned
+      spec:
+        selfSigned: {}
+
+# Avoid hitting Let's Encrypt rate limits: only create the Certificate if it does not already exist
+- name: Check if Harbor certificate already exists
+  kubernetes.core.k8s_info:
+    api_version: cert-manager.io/v1
+    kind: Certificate
+    namespace: "{{ harbor_namespace }}"
+    name: "{{ harbor_secret_name }}"
+  register: harbor_cert_info
+  failed_when: false
+  changed_when: false
+
+- name: Create Certificate for harbor.local using self-signed issuer
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      metadata:
+        name: "{{ harbor_secret_name }}"
+        namespace: "{{ harbor_namespace }}"
+      spec:
+        secretName: "{{ harbor_tls_secret_name }}"
+        dnsNames:
+          - "{{ harbor_domain }}"
+        issuerRef:
+          name: harbor-selfsigned
+          kind: ClusterIssuer
+  when: harbor_cert_info.resources | length == 0
+
+- name: Get Harbor TLS secret after certificate creation
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ harbor_namespace }}"
+    name: "{{ harbor_tls_secret_name }}"
+  register: harbor_tls_secret
+
+- name: Create harbor-ca secret in each project namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: harbor-ca
+        namespace: "{{ item.name }}"
+      data:
+        ca.crt: "{{ harbor_tls_secret.resources[0].data['ca.crt'] }}"
+  loop: "{{ self_saas_projects }}"

@@ -1,0 +1,21 @@
+- name: Get Traefik service info (delegated to localhost)
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Service
+    namespace: kube-system
+    name: traefik
+  register: traefik_svc
+  delegate_to: localhost
+  become: false
+
+- name: Set traefik_cluster_ip fact for this host
+  ansible.builtin.set_fact:
+    traefik_cluster_ip: "{{ traefik_svc.resources[0].spec.clusterIP }}"
+
+- name: Ensure harbor_domain is in /etc/hosts pointing to Traefik ClusterIP
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '.*\s+{{ harbor_domain }}$'
+    line: "{{ traefik_cluster_ip }} {{ harbor_domain }}"
+    state: present
+    backup: false

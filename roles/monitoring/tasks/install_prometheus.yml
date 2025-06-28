@@ -1,0 +1,30 @@
+- name: Install Prometheus using Helm
+  when: prometheus_enabled
+  kubernetes.core.helm:
+    name: prometheus
+    chart_ref: prometheus-community/prometheus
+    release_namespace: "{{ monitoring_namespace }}"
+    create_namespace: false
+    values:
+      prometheus:
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: "{{ prometheus_storage_class }}"
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: "{{ prometheus_storage_size }}"
+      alertmanager:
+        enabled: "{{ prometheus_alertmanager_enabled }}"
+        alertmanagerSpec:
+          storage:
+            volumeClaimTemplate:
+              spec:
+                storageClassName: "{{ prometheus_storage_class }}"
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: "{{ prometheus_alertmanager_storage_size }}"
+    wait: true
+    wait_timeout: 5m

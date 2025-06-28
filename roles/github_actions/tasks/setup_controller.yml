@@ -1,0 +1,40 @@
+- name: Add actions-runner-controller Helm repository
+  kubernetes.core.helm_repository:
+    name: actions-runner-controller
+    repo_url: https://actions-runner-controller.github.io/actions-runner-controller
+
+- name: Ensure actions-runner-system namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: actions-runner-system
+
+- name: Create GitHub token secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: controller-manager-gh-secret
+        namespace: actions-runner-system
+      stringData:
+        github_token: "{{ github_pat }}"
+
+- name: Install actions-runner-controller via Helm
+  kubernetes.core.helm:
+    name: actions-runner-controller
+    chart_ref: actions-runner-controller/actions-runner-controller
+    release_namespace: actions-runner-system
+    create_namespace: true
+    values:
+      authSecret:
+        create: false
+        name: controller-manager-gh-secret
+      podLabels:
+        control-plane: controller-manager
+    wait: true
+    wait_timeout: 5m

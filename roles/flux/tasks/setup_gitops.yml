@@ -1,0 +1,62 @@
+- name: Create GitHub token secret for Flux (HTTPS auth) in each app namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: flux-git-auth
+        namespace: "{{ item.name }}"
+      stringData:
+        username: "{{ flux_github_username }}"
+        password: "{{ github_pat }}"
+    wait: true
+  loop: "{{ self_saas_projects }}"
+
+- name: Ensure app namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ item.name }}"
+  loop: "{{ self_saas_projects }}"
+
+- name: Create GitRepository for each app repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: source.toolkit.fluxcd.io/v1beta2
+      kind: GitRepository
+      metadata:
+        name: "{{ item.name }}"
+        namespace: "{{ item.name }}"
+      spec:
+        interval: "{{ flux_git_repo_interval }}"
+        url: "{{ item.github_repo_http_url }}"
+        secretRef:
+          name: flux-git-auth
+        ref:
+          branch: main
+  loop: "{{ self_saas_projects }}"
+
+- name: Create Kustomization for each app repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+      kind: Kustomization
+      metadata:
+        name: "{{ item.name }}"
+        namespace: "{{ item.name }}"
+      spec:
+        interval: "{{ flux_kustomization_interval }}"
+        path: "{{ item.path }}"
+        prune: true
+        sourceRef:
+          kind: GitRepository
+          name: "{{ item.name }}"
+          namespace: "{{ item.name }}"
+        validation: client
+  loop: "{{ self_saas_projects }}"
