@@ -51,6 +51,10 @@
                   - "/tmp/create_keyspace.cql"
                   - "cassandra"
                   - "9042"
+                  - "-u"
+                  - "{{ cassandra_admin_username }}"
+                  - "-p"
+                  - "{{ cassandra_admin_password }}"
                 volumeMounts:
                   - name: sql
                     mountPath: /tmp/create_keyspace.cql
