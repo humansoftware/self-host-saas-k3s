@@ -1,7 +1,7 @@
 ---
 install_elasticsearch: false
 
-elasticsearch_namespace: elasticsearch
+
 elasticsearch_storage_class: longhorn-single-replica
 elasticsearch_storage_size: 8Gi
 

@@ -1,7 +1,7 @@
 ---
 install_cassandra: false
 
-cassandra_namespace: cassandra
+
 cassandra_storage_class: longhorn-single-replica
 cassandra_storage_size: 8Gi
 
