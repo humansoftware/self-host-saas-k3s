@@ -35,7 +35,7 @@
                       }'
 
                     # Create user and assign role
-                    curl -X POST "http://elasticsearch-master:9200/_security/user/{{ item.elasticsearch.username }}" \
+                    curl -X PUT "http://elasticsearch-master:9200/_security/user/{{ item.elasticsearch.username }}" \
                       -u "{{ elasticsearch_admin_username }}:{{ elasticsearch_admin_password }}" \
                       -H 'Content-Type: application/json' -d '
                       {
