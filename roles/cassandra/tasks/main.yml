@@ -23,6 +23,10 @@
         enabled: true
         storageClass: "{{ cassandra_storage_class }}"
         size: "{{ cassandra_storage_size }}"
+      auth:
+        enabled: true
+        username: "{{ cassandra_username }}"
+        password: "{{ cassandra_password }}"
     wait: true
     wait_timeout: 10m
 

@@ -6,5 +6,6 @@ Host k3s-tunnel
     Port {{ k3s_ssh_port }}
     LocalForward 6443 localhost:6443
     LocalForward {{ cassandra_local_port }} localhost:{{ cassandra_local_port }}
+    LocalForward {{ elasticsearch_local_port }} localhost:{{ elasticsearch_local_port }}
     ServerAliveInterval 60
     ServerAliveCountMax 3

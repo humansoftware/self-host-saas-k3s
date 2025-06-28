@@ -58,6 +58,9 @@
     - role: cassandra
       when: install_cassandra
       tags: cassandra
+    - role: elasticsearch
+      when: install_elasticsearch
+      tags: elasticsearch
     - role: create_projects_secrets
       tags: create_projects_secrets
 

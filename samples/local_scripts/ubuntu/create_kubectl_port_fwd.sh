@@ -46,5 +46,9 @@ echo "Postgres: localhost:15432 (user: postgres, see secrets for password)"
 kubectl port-forward svc/cassandra -n cassandra 9042:9042 &
 echo "Cassandra: localhost:9042"
 
+# Port-forward Elasticsearch service to local port 9200
+kubectl port-forward svc/elasticsearch-master -n elasticsearch 9200:9200 &
+echo "Elasticsearch: http://localhost:9200"
+
 # Wait for background jobs
 wait
