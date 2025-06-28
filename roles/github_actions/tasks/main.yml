@@ -47,18 +47,6 @@
     name: "{{ harbor_tls_secret_name }}"
   register: harbor_tls_secret
 
-- name: Create harbor-ca secret in actions-runner-system
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: harbor-ca
-        namespace: actions-runner-system
-      data:
-        ca.crt: "{{ harbor_tls_secret.resources[0].data['ca.crt'] }}"
-
 - name: Deploy GitHub Actions Runner for each app repo
   ansible.builtin.template:
     src: runnerdeployment.yaml.j2
