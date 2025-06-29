@@ -4,7 +4,7 @@
     chart_ref: mailu/mailu
     release_namespace: mailu
     values:
-      hostnames: "{{ self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | map(attribute='domain') | list + (self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | map(attribute='domain') | map('regex_replace', '(.*)', 'smtp.\1') | list) }}"
+      hostnames: "{{ self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | map(attribute='domain') | map('regex_replace', '(.*)', 'mail.\1') | list }}"
       domain: "{{ mailu_main_domain }}"
       admin:
         enabled: "{{ mailu_enable_admin | default(true) }}"

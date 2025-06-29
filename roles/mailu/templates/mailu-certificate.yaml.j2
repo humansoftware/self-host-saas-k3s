@@ -11,5 +11,5 @@ spec:
   dnsNames:
 {% for project in self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list %}
     - {{ project.domain }}
-    - smtp.{{ project.domain }}
+    - mail.{{ project.domain }}
 {% endfor %}
