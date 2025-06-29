@@ -1,8 +1,8 @@
 - name: Set main Mailu domain from first enabled project
   ansible.builtin.set_fact:
     mailu_main_domain: >-
-      {{ (self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list)[0].domain }}
-  when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
+      {{ (self_saas_projects | selectattr('mail.enabled', 'defined') | selectattr('mail.enabled') | list)[0].domain }}
+  when: self_saas_projects | selectattr('mail.enabled', 'defined') | selectattr('mail.enabled') | list | length > 0
 
 - name: Set cert-manager issuer and domain logic
   ansible.builtin.set_fact:
@@ -26,7 +26,7 @@
     src: mailu-certificate.yaml.j2
     dest: "/tmp/mailu-certificate.yaml"
     mode: '0644'
-  when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
+  when: self_saas_projects | selectattr('mail.enabled', 'defined') | selectattr('mail.enabled') | list | length > 0
 
 # Avoid hitting Let's Encrypt rate limits: only create the Certificate if it does not already exist
 - name: Check if Mailu certificate already exists
@@ -44,5 +44,5 @@
     state: present
     src: "/tmp/mailu-certificate.yaml"
   when:
-    - self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
+    - self_saas_projects | selectattr('mail.enabled', 'defined') | selectattr('mail.enabled') | list | length > 0
     - mailu_cert_info.resources | length == 0
