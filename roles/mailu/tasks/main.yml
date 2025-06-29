@@ -10,3 +10,10 @@
 
 - name: Install Mailu
   ansible.builtin.include_tasks: install.yml
+
+- name: Configure project domains and users in Mailu
+  ansible.builtin.include_tasks: configure_project_domains.yml
+  loop: "{{ self_saas_projects | default([]) }}"
+  loop_control:
+    loop_var: item
+  when: item.mailu.enabled | default(false)
