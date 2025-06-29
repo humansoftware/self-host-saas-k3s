@@ -39,8 +39,8 @@ kubectl -n mailu port-forward svc/mailu-admin 8082:8080 &
 echo "Mailu Admin: http://localhost:8082/admin (admin/<your password>)"
 
 # Forward Mailu Webmail UI
-kubectl -n mailu port-forward svc/mailu-front 8083:443 &
-echo "Mailu Webmail: https://localhost:8083"
+kubectl -n mailu port-forward svc/mailu-front 8083:80 &
+echo "Mailu Webmail: http://localhost:8083"
 
 # Port-forward Postgres service to local port 15432 instead of 5432
 kubectl port-forward svc/postgres-postgresql -n postgres 15432:5432 &
