@@ -32,7 +32,7 @@ self_saas_projects:
       password: "your_smtp_password"
 ```
 
-- Only projects with `smtp.enabled: true` will be included in the Mailu configuration.
+- Only projects with `mailu.enabled: true` will be included in the Mailu configuration.
 - The `domain` under `smtp` should be the SMTP hostname you want to use for that project.
 - The `user` and `password` are the credentials Mailu will use for sending mail from that project.
 
@@ -80,7 +80,7 @@ smtp.another.example.com.  IN A 203.0.113.10
 
 ## 5. Additional Notes
 - You only need to deploy Mailu once; it will handle all enabled domains.
-- If you want to disable SMTP for a specific project, set `smtp.enabled: false` for that project.
+- If you want to disable Mailu for a specific project, set `mailu.enabled: false` for that project.
 - Always test your email deliverability and check spam folders after setup.
 
 For more details, see the [Mailu documentation](https://mailu.io/).
