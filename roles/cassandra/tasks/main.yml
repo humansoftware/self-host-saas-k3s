@@ -11,6 +11,9 @@
     name: "{{ cassandra_helm_repo_name }}"
     repo_url: "{{ cassandra_helm_repo_url }}"
 
+- name: Prepare Cassandra initialization scripts
+  ansible.builtin.include_tasks: prepare_init_scripts.yml
+
 - name: Install Cassandra via Helm
   kubernetes.core.helm:
     name: cassandra
@@ -27,11 +30,6 @@
         enabled: true
       dbUser:
         password: "{{ cassandra_admin_password }}"
+      initDBConfigMap: "{{ cassandra_init_configmap_name }}"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
-
-- name: Create Cassandra keyspaces for projects
-  ansible.builtin.include_tasks: create_keyspaces.yml
-
-- name: Create Cassandra users for projects
-  ansible.builtin.include_tasks: create_users.yml

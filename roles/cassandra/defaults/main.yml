@@ -9,10 +9,12 @@ cassandra_storage_size: 8Gi
 cassandra_helm_repo_name: bitnami
 cassandra_helm_repo_url: https://charts.bitnami.com/bitnami
 cassandra_chart_name: cassandra
-cassandra_chart_version: 11.1.0 # Check for the latest stable version
+cassandra_chart_version: 12.3.8 # Check for the latest stable version
 cassandra_image_version: 4.1.4-debian-12-r7 # Image version for cqlsh client
 
 # Port for local access
 cassandra_local_port: 9042
 
 cassandra_admin_username: "cassandra"
+
+cassandra_init_configmap_name: "cassandra-init-scripts"
