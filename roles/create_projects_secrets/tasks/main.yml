@@ -10,6 +10,21 @@
   loop_control:
     label: "{{ item.name }}"
 
+- name: Try to get Elasticsearch CA certificate
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: elasticsearch-master-certs
+    namespace: "{{ elasticsearch_namespace | default('elasticsearch') }}"
+  register: elasticsearch_ca_secret
+  changed_when: false
+  when: install_elasticsearch | default(false)
+
+- name: Set CA certificate fact
+  ansible.builtin.set_fact:
+    elasticsearch_ca_crt: "{{ elasticsearch_ca_secret.resources[0].data['ca.crt'] | b64decode }}"
+  when: install_elasticsearch | default(false)
+
 - name: Render secret data for each project using template
   ansible.builtin.set_fact:
     project_secret_data: "{{ lookup('template', 'roles/create_projects_secrets/templates/project_secret.yaml.j2') | from_yaml }}"
