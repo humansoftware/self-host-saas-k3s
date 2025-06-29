@@ -14,6 +14,15 @@
       domain: "{{ mailu_main_domain }}"
       ingress:
         enabled: false
+        className: "traefik"
+        annotations:
+          cert-manager.io/cluster-issuer: "{{ mailu_cert_issuer_name }}"
+          traefik.ingress.kubernetes.io/service.serversscheme: "http"
+        tls:
+          - hosts:
+              - mailu.{{ mailu_main_domain }}
+            secretName: mailu-certificates
+        tlsFlavorOverride: "notls"
       admin:
         enabled: "{{ mailu_enable_admin | default(true) }}"
       service:
@@ -64,6 +73,9 @@
           externalTrafficPolicy: Local
           annotations:
             traefik.ingress.kubernetes.io/service.serversscheme: "http"
+        extraEnvVars:
+          - name: WEBMAIL_ADDRESS
+            value: "mailu-webmail.mailu.svc.cluster.local:80"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
   when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
