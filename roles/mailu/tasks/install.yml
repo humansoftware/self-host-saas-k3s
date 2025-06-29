@@ -62,6 +62,8 @@
           enabled: true
           type: LoadBalancer
           externalTrafficPolicy: Local
+          annotations:
+            traefik.ingress.kubernetes.io/service.serversscheme: "http"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
   when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
