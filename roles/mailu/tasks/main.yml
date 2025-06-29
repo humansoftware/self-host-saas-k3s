@@ -1,4 +1,20 @@
 ---
+- name: Set first Mailu project fact
+  ansible.builtin.set_fact:
+    first_mailu_project: >-
+      {{ self_saas_projects |
+         selectattr('mailu.enabled', 'defined') |
+         selectattr('mailu.enabled') |
+         first }}
+  when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
+
+- name: Set Mailu main domain and admin facts
+  ansible.builtin.set_fact:
+    mailu_main_domain: "{{ first_mailu_project.domain }}"
+    mailu_admin_username: "{{ first_mailu_project.mailu.user }}"
+    mailu_admin_password: "{{ first_mailu_project.mailu.password }}"
+  when: first_mailu_project is defined and first_mailu_project is not none
+
 - name: Setup mailu namespace
   ansible.builtin.include_tasks: setup_namespace.yml
 

@@ -24,7 +24,7 @@
             secretName: mailu-certificates
         tlsFlavorOverride: "notls"
       admin:
-        enabled: "{{ mailu_enable_admin | default(true) }}"
+        enabled: true
       service:
         smtp:
           type: LoadBalancer
