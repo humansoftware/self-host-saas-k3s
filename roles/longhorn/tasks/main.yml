@@ -35,7 +35,7 @@
     create_namespace: true
     values: "{{ longhorn_helm_values }}"
     wait: true
-    wait_timeout: 5m
+    wait_timeout: "{{ helm_install_timeout }}"
 
 - name: Create Longhorn StorageClass with 1 replica
   kubernetes.core.k8s:

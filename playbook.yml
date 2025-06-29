@@ -37,6 +37,8 @@
   become: false
   environment:
     KUBECONFIG: "{{ k3s_local_kubeconfig }}"
+  vars:
+    helm_install_timeout: 5m # Default timeout for Helm installations
   roles:
     - role: cert_manager
       tags: cert_manager
@@ -55,6 +57,12 @@
       tags: mailu
     - role: postgres
       tags: postgres
+    - role: cassandra
+      when: install_cassandra
+      tags: cassandra
+    - role: elasticsearch
+      when: install_elasticsearch
+      tags: elasticsearch
     - role: create_projects_secrets
       tags: create_projects_secrets
 

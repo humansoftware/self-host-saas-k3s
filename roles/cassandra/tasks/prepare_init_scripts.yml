@@ -1,0 +1,20 @@
+---
+- name: Render all Cassandra init scripts to a variable
+  set_fact:
+    cassandra_init_scripts: "{{ lookup('template', 'cassandra-init-scripts.yaml.j2') | from_yaml }}"
+  run_once: true
+  delegate_to: localhost
+
+- name: Create a single ConfigMap for all Cassandra initialization scripts
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      metadata:
+        name: "{{ cassandra_init_configmap_name }}"
+        namespace: "{{ cassandra_namespace }}"
+      kind: ConfigMap
+      apiVersion: v1
+      data: "{{ cassandra_init_scripts }}"
+  when: cassandra_init_scripts is defined
+  delegate_to: localhost
+  run_once: true

@@ -1,0 +1,35 @@
+---
+- name: Ensure Cassandra namespace exists
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ cassandra_namespace }}"
+    state: present
+
+- name: Add Bitnami Helm repository
+  kubernetes.core.helm_repository:
+    name: "{{ cassandra_helm_repo_name }}"
+    repo_url: "{{ cassandra_helm_repo_url }}"
+
+- name: Prepare Cassandra initialization scripts
+  ansible.builtin.include_tasks: prepare_init_scripts.yml
+
+- name: Install Cassandra via Helm
+  kubernetes.core.helm:
+    name: cassandra
+    chart_ref: "{{ cassandra_helm_repo_name }}/{{ cassandra_chart_name }}"
+    chart_version: "{{ cassandra_chart_version }}"
+    release_namespace: "{{ cassandra_namespace }}"
+    create_namespace: false
+    values:
+      persistence:
+        enabled: true
+        storageClass: "{{ cassandra_storage_class }}"
+        size: "{{ cassandra_storage_size }}"
+      auth:
+        enabled: true
+      dbUser:
+        password: "{{ cassandra_admin_password }}"
+      initDBConfigMap: "{{ cassandra_init_configmap_name }}"
+    wait: true
+    wait_timeout: "{{ helm_install_timeout }}"

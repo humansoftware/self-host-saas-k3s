@@ -37,4 +37,4 @@
       podLabels:
         control-plane: controller-manager
     wait: true
-    wait_timeout: 5m
+    wait_timeout: "{{ helm_install_timeout }}"

@@ -1,0 +1,9 @@
+# cassandra-init-scripts.yaml.j2
+create_keyspace.cql: |
+{% for item in self_saas_projects if item.cassandra is defined and item.cassandra.enabled %}
+  CREATE KEYSPACE IF NOT EXISTS {{ item.name | lower | regex_replace('[^a-z0-9_]', '_') }}
+    WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+  CREATE USER IF NOT EXISTS {{ item.cassandra.username }} WITH PASSWORD '{{ item.cassandra.password }}';
+
+{% endfor %}

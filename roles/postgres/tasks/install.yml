@@ -25,7 +25,7 @@
             pgvector.sql: |
               CREATE EXTENSION IF NOT EXISTS vector;
     wait: true
-    timeout: 5m
+    timeout: "{{ helm_install_timeout }}"
   register: postgres_helm_result
 
 - name: Debug Postgres Helm result

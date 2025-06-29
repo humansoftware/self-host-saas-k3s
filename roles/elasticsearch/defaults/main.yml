@@ -1,0 +1,18 @@
+---
+install_elasticsearch: false
+
+
+elasticsearch_storage_class: longhorn-single-replica
+elasticsearch_storage_size: 8Gi
+
+# Helm chart details
+elasticsearch_helm_repo_name: elastic
+elasticsearch_helm_repo_url: https://helm.elastic.co
+elasticsearch_chart_name: elasticsearch
+elasticsearch_chart_version: 8.5.1 # Check for the latest stable version
+
+# Port for local access
+elasticsearch_local_port: 9200
+
+# Authentication
+elasticsearch_admin_username: "elastic"

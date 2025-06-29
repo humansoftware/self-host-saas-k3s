@@ -33,4 +33,4 @@
       installCRDs: false
     state: present
     wait: true
-    timeout: 5m
+    timeout: "{{ helm_install_timeout }}"
