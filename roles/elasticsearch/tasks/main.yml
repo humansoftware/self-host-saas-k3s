@@ -25,9 +25,9 @@
         resources:
           requests:
             storage: "{{ elasticsearch_storage_size }}"
-      # Authentication
-      auth:
+      secret:
         enabled: true
+        password: "{{ elasticsearch_admin_password }}"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
 

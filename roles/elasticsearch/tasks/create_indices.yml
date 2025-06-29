@@ -1,4 +1,17 @@
 ---
+- name: Ensure previous Elasticsearch index creation job is absent
+  kubernetes.core.k8s:
+    state: absent
+    api_version: batch/v1
+    kind: Job
+    name: "elasticsearch-index-creator-{{ item.name | lower | regex_replace('[^a-z0-9-]', '-') }}"
+    namespace: "{{ elasticsearch_namespace }}"
+  delegate_to: localhost
+  run_once: true
+  loop: "{{ self_saas_projects | selectattr('elasticsearch.enabled', 'defined') | selectattr('elasticsearch.enabled') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
+
 - name: Create Elasticsearch index for project
   kubernetes.core.k8s:
     state: present
@@ -20,16 +33,16 @@
                   - sh
                   - -c
                   - |
-                    curl -X PUT "http://elasticsearch-master:9200/{{ item.name | lower | regex_replace('[^a-z0-9_]', '_') }}" \
-                      -u "{{ elasticsearch_username }}:{{ elasticsearch_password }}" \
+                    curl -k -X PUT "https://elasticsearch-master:9200/{{ item.name | lower | regex_replace('[^a-z0-9_]', '_') }}" \
+                      -u "{{ elasticsearch_admin_username }}:{{ elasticsearch_admin_password }}" \
                       -H 'Content-Type: application/json' -d '{}'
                 env:
-                  - name: ELASTICSEARCH_USERNAME
-                    value: "{{ elasticsearch_username }}"
-                  - name: ELASTICSEARCH_PASSWORD
-                    value: "{{ elasticsearch_password }}"
-    delegate_to: localhost
-    run_once: true
+                  - name: ELASTICSEARCH_ADMIN_USERNAME
+                    value: "{{ elasticsearch_admin_username }}"
+                  - name: ELASTICSEARCH_ADMIN_PASSWORD
+                    value: "{{ elasticsearch_admin_password }}"
+  delegate_to: localhost
+  run_once: true
   loop: "{{ self_saas_projects | selectattr('elasticsearch.enabled', 'defined') | selectattr('elasticsearch.enabled') | list }}"
   loop_control:
     label: "{{ item.name }}"
@@ -42,7 +55,7 @@
     name: "elasticsearch-index-creator-{{ item.name | lower | regex_replace('[^a-z0-9-]', '-') }}"
   register: job_info
   until: job_info.resources[0].status.succeeded is defined and job_info.resources[0].status.succeeded > 0
-  retries: 10
+  retries: 4
   delay: 10
   delegate_to: localhost
   run_once: true

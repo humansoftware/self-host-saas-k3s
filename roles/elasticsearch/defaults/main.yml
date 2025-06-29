@@ -9,11 +9,10 @@ elasticsearch_storage_size: 8Gi
 elasticsearch_helm_repo_name: elastic
 elasticsearch_helm_repo_url: https://helm.elastic.co
 elasticsearch_chart_name: elasticsearch
-elasticsearch_chart_version: 8.14.0 # Check for the latest stable version
+elasticsearch_chart_version: 8.5.1 # Check for the latest stable version
 
 # Port for local access
 elasticsearch_local_port: 9200
 
 # Authentication
 elasticsearch_admin_username: "elastic"
-elasticsearch_admin_password: "changeme"
