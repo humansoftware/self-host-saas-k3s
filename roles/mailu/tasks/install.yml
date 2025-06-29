@@ -4,8 +4,25 @@
     chart_ref: mailu/mailu
     release_namespace: mailu
     values:
-      hostnames: "{{ self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | map(attribute='smtp.domain') | list }}"
+      hostnames: >-
+        {{ self_saas_projects |
+           selectattr('mailu.enabled', 'defined') |
+           selectattr('mailu.enabled') |
+           map(attribute='domain') |
+           map('regex_replace', '^', 'mailu.') |
+           list }}
       domain: "{{ mailu_main_domain }}"
+      ingress:
+        enabled: false
+        className: "traefik"
+        annotations:
+          cert-manager.io/cluster-issuer: "{{ mailu_cert_issuer_name }}"
+          traefik.ingress.kubernetes.io/service.serversscheme: "http"
+        tls:
+          - hosts:
+              - mailu.{{ mailu_main_domain }}
+            secretName: mailu-certificates
+        tlsFlavorOverride: "notls"
       admin:
         enabled: "{{ mailu_enable_admin | default(true) }}"
       service:
@@ -44,7 +61,7 @@
       pop3:
         enabled: false
       webmail:
-        enabled: false
+        enabled: true
       antivirus:
         enabled: false
       front:
@@ -54,6 +71,11 @@
           enabled: true
           type: LoadBalancer
           externalTrafficPolicy: Local
+          annotations:
+            traefik.ingress.kubernetes.io/service.serversscheme: "http"
+        extraEnvVars:
+          - name: WEBMAIL_ADDRESS
+            value: "mailu-webmail.mailu.svc.cluster.local:80"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
-  when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
+  when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
