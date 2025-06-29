@@ -4,7 +4,13 @@
     chart_ref: mailu/mailu
     release_namespace: mailu
     values:
-      hostnames: "{{ self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | map(attribute='domain') | map('regex_replace', '(.*)', 'mailu.\1') | list }}"
+      hostnames: >-
+        {{ self_saas_projects |
+           selectattr('mailu.enabled', 'defined') |
+           selectattr('mailu.enabled') |
+           map(attribute='domain') |
+           map('regex_replace', '^', 'mailu.') |
+           list }}
       domain: "{{ mailu_main_domain }}"
       admin:
         enabled: "{{ mailu_enable_admin | default(true) }}"

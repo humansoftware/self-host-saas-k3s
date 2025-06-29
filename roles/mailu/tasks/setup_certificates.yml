@@ -44,5 +44,5 @@
     state: present
     src: "/tmp/mailu-certificate.yaml"
   when:
-    - self_saas_projects | selectattr('mail.enabled', 'defined') | selectattr('mail.enabled') | list | length > 0
+    - self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
     - mailu_cert_info.resources | length == 0
