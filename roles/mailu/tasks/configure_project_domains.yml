@@ -1,25 +1,33 @@
 ---
-- name: Get Mailu admin pod name
-  ansible.builtin.shell: >
-    kubectl get pods -n mailu -l app.kubernetes.io/name=mailu -o jsonpath="{.items[0].metadata.name}"
-  register: mailu_admin_pod_name_result
+- name: Get Mailu admin pod info
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: mailu
+    label_selector: "app.kubernetes.io/name=mailu"
+  register: mailu_admin_pods
   delegate_to: localhost
   run_once: true
 
 - name: Set mailu_admin_pod_name fact
   ansible.builtin.set_fact:
-    mailu_admin_pod_name: "{{ mailu_admin_pod_name_result.stdout }}"
+    mailu_admin_pod_name: "{{ mailu_admin_pods.resources[0].metadata.name }}"
+  when: mailu_admin_pods.resources | length > 0
 
 - name: Add Mailu domain for {{ item.name }}
-  ansible.builtin.shell: >
-    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- flask mailu domain {{ item.domain }}
-  when: item.mailu.enabled | default(false) and item.domain != mailu_main_domain
+  kubernetes.core.k8s_exec:
+    namespace: mailu
+    pod: "{{ mailu_admin_pod_name }}"
+    command: ["flask", "mailu", "domain", "{{ item.domain }}"]
+  when: item.mailu.enabled | default(false) and item.domain != mailu_main_domain and mailu_admin_pod_name is defined
   delegate_to: localhost
   run_once: true
 
 - name: Add Mailu user for {{ item.name }}
-  ansible.builtin.shell: >
-    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- flask mailu user {{ item.mailu.user }} {{ item.domain }} '{{ item.mailu.password }}'
-  when: item.mailu.enabled | default(false) and item.domain != mailu_main_domain
+  kubernetes.core.k8s_exec:
+    namespace: mailu
+    pod: "{{ mailu_admin_pod_name }}"
+    command: ["flask", "mailu", "user", "{{ item.mailu.user }}", "{{ item.domain }}", "{{ item.mailu.password }}"]
+  when: item.mailu.enabled | default(false) and item.domain != mailu_main_domain and mailu_admin_pod_name is defined
   delegate_to: localhost
   run_once: true
