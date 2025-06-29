@@ -9,6 +9,7 @@ spec:
     name: {{ mailu_cert_issuer_name }}
     kind: {{ mailu_cert_issuer_kind }}
   dnsNames:
-{% for domain in self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | map(attribute='smtp.domain') | list %}
-    - {{ domain }}
+{% for project in self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list %}
+    - {{ project.domain }}
+    - smtp.{{ project.domain }}
 {% endfor %}

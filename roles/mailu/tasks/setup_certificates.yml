@@ -1,7 +1,7 @@
 - name: Set main Mailu domain from first enabled project
   ansible.builtin.set_fact:
     mailu_main_domain: >-
-      {{ (self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list)[0].smtp.domain }}
+      {{ (self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list)[0].domain }}
   when: self_saas_projects | selectattr('smtp.enabled', 'defined') | selectattr('smtp.enabled') | list | length > 0
 
 - name: Set cert-manager issuer and domain logic
