@@ -4,7 +4,7 @@
     chart_ref: mailu/mailu
     release_namespace: mailu
     values:
-      hostnames: "{{ self_saas_projects | selectattr('mail.enabled', 'defined') | selectattr('mail.enabled') | map(attribute='domain') | map('regex_replace', '(.*)', 'mail.\1') | list }}"
+      hostnames: "{{ self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | map(attribute='domain') | map('regex_replace', '(.*)', 'mailu.\1') | list }}"
       domain: "{{ mailu_main_domain }}"
       admin:
         enabled: "{{ mailu_enable_admin | default(true) }}"
@@ -56,4 +56,4 @@
           externalTrafficPolicy: Local
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
-  when: self_saas_projects | selectattr('mail.enabled', 'defined') | selectattr('mail.enabled') | list | length > 0
+  when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
