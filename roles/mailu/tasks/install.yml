@@ -12,6 +12,9 @@
            map('regex_replace', '^', 'mailu.') |
            list }}
       domain: "{{ mailu_main_domain }}"
+      ingress:
+        enabled: true
+        className: "{{ mailu_ingress_class | default('traefik') }}"
       admin:
         enabled: "{{ mailu_enable_admin | default(true) }}"
       service:
