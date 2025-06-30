@@ -14,6 +14,15 @@
       domain: "{{ mailu_main_domain }}"
       ingress:
         enabled: false
+        className: "traefik"
+        annotations:
+          cert-manager.io/cluster-issuer: "{{ mailu_cert_issuer_name }}"
+          traefik.ingress.kubernetes.io/service.serversscheme: "http"
+        tls:
+          - hosts:
+              - mailu.{{ mailu_main_domain }}Add commentMore actions
+            secretName: mailu-certificates
+        tlsFlavorOverride: "notls"
       admin:
         enabled: true
       initialAccount:
