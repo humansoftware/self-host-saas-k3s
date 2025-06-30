@@ -12,6 +12,8 @@
            map('regex_replace', '^', 'mailu.') |
            list }}
       domain: "{{ mailu_main_domain }}"
+      customization:
+        website: "http://localhost:8083/"
       ingress:
         enabled: false
         className: "traefik"
