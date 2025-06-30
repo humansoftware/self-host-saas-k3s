@@ -14,24 +14,8 @@
       domain: "{{ mailu_main_domain }}"
       ingress:
         enabled: false
-        className: "traefik"
-        annotations:
-          cert-manager.io/cluster-issuer: "{{ mailu_cert_issuer_name }}"
-          traefik.ingress.kubernetes.io/service.serversscheme: "http"
-        tls:
-          - hosts:
-              - mailu.{{ mailu_main_domain }}
-            secretName: mailu-certificates
-        tlsFlavorOverride: "notls"
       admin:
         enabled: true
-      service:
-        smtp:
-          type: LoadBalancer
-        submission:
-          type: LoadBalancer
-        smtps:
-          type: LoadBalancer
       initialAccount:
         enabled: true
         username: "{{ mailu_admin_username }}"
@@ -52,18 +36,8 @@
         persistence:
           enabled: true
           size: "{{ mailu_clamav_size }}"
-      oletools:
-        enabled: "{{ mailu_enable_oletools | default(false) }}"
-      tika:
-        enabled: "{{ mailu_enable_tika | default(false) }}"
-      imap:
-        enabled: "{{ enable_mailu_imap_public_access | default(false) }}"
-      pop3:
-        enabled: false
       webmail:
         enabled: true
-      antivirus:
-        enabled: false
       front:
         hostPort:
           enabled: false
@@ -73,6 +47,8 @@
           externalTrafficPolicy: Local
           annotations:
             traefik.ingress.kubernetes.io/service.serversscheme: "http"
+          ports:
+            imaps: "{{ enable_mailu_imap_public_access | default(false) }}"
         extraEnvVars:
           - name: WEBMAIL_ADDRESS
             value: "mailu-webmail.mailu.svc.cluster.local:80"
