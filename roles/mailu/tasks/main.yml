@@ -33,3 +33,10 @@
   loop_control:
     loop_var: item
   when: item.mailu.enabled | default(false)
+
+- name: Configure aliases in Mailu
+  ansible.builtin.include_tasks: configure_aliases.yml
+  loop: "{{ self_saas_projects | default([]) }}"
+  loop_control:
+    loop_var: item
+  when: item.mailu.enabled | default(false)

@@ -57,7 +57,7 @@
       tika:
         enabled: "{{ mailu_enable_tika | default(false) }}"
       imap:
-        enabled: false
+        enabled: "{{ enable_mailu_imap_public_access | default(false) }}"
       pop3:
         enabled: false
       webmail:

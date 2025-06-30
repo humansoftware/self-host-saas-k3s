@@ -1,0 +1,37 @@
+---
+- name: Get Mailu admin pod name for aliases
+  ansible.builtin.shell: >
+    kubectl get pods -n mailu -l app.kubernetes.io/name=mailu -o jsonpath="{.items[0].metadata.name}"
+  register: mailu_admin_pod_name_result
+  delegate_to: localhost
+  run_once: true
+
+- name: Set mailu_admin_pod_name fact for aliases
+  ansible.builtin.set_fact:
+    mailu_admin_pod_name: "{{ mailu_admin_pod_name_result.stdout }}"
+
+- name: Create noreply alias for {{ item.name }}
+  ansible.builtin.shell: >
+    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- python3 -m flask mailu alias noreply {{ item.domain }} devnull@{{ item.domain }}
+  when: item.mailu.enabled | default(false)
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  failed_when: >-
+    mailu_noreply_alias_result.rc != 0 and
+    'Alias noreply@' + item.domain + ' already exists' not in mailu_noreply_alias_result.stderr and
+    'UNIQUE constraint failed: alias.email' not in mailu_noreply_alias_result.stderr
+  register: mailu_noreply_alias_result
+
+- name: Create catch-all alias for {{ item.name }}
+  ansible.builtin.shell: >
+    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- python3 -m flask mailu alias -w '%' {{ item.domain }} admin@{{ item.domain }}
+  when: item.mailu.enabled | default(false)
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  failed_when: >-
+    mailu_catchall_alias_result.rc != 0 and
+    'Alias *@' + item.domain + ' already exists' not in mailu_catchall_alias_result.stderr and
+    'UNIQUE constraint failed: alias.email' not in mailu_catchall_alias_result.stderr
+  register: mailu_catchall_alias_result
