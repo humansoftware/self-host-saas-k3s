@@ -47,6 +47,16 @@
     name: "{{ harbor_tls_secret_name }}"
   register: harbor_tls_secret
 
+- name: Ensure each project namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ item.name }}"
+  loop: "{{ self_saas_projects }}"
+
 - name: Create harbor-ca secret in each project namespace
   kubernetes.core.k8s:
     state: present
