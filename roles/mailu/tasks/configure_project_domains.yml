@@ -1,0 +1,31 @@
+---
+- name: Get Mailu admin pod name
+  ansible.builtin.shell: >
+    kubectl get pods -n mailu -l app.kubernetes.io/name=mailu -o jsonpath="{.items[0].metadata.name}"
+  register: mailu_admin_pod_name_result
+  delegate_to: localhost
+  run_once: true
+
+- name: Set mailu_admin_pod_name fact
+  ansible.builtin.set_fact:
+    mailu_admin_pod_name: "{{ mailu_admin_pod_name_result.stdout }}"
+
+- name: Add Mailu domain for {{ item.name }}
+  ansible.builtin.shell: >
+    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- python3 -m flask mailu domain {{ item.domain }}
+  when: item.mailu.enabled | default(false) and item.domain != mailu_main_domain
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  failed_when: "'Domain ' + item.domain + ' already exists' not in mailu_domain_add_result.stderr and mailu_domain_add_result.rc != 0"
+  register: mailu_domain_add_result
+
+- name: Add Mailu user for {{ item.name }}
+  ansible.builtin.shell: >
+    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- python3 -m flask mailu admin -m update {{ item.mailu.user }} {{ item.domain }} '{{ item.mailu.password }}'
+  when: item.mailu.enabled | default(false) and item.domain != mailu_main_domain
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  failed_when: "'User ' + item.mailu.user + '@' + item.domain + ' already exists' not in mailu_user_add_result.stderr and mailu_user_add_result.rc != 0"
+  register: mailu_user_add_result
