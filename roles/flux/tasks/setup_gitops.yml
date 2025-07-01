@@ -59,4 +59,9 @@
           name: "{{ item.name }}"
           namespace: "{{ item.name }}"
         validation: client
+        ref:
+          tag: "v*"
+        postBuild:
+          substitute:
+            __IMG_TAG__: "{% raw %}{{ .TagName }}{% endraw %}"
   loop: "{{ self_saas_projects }}"
