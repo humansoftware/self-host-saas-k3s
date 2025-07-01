@@ -38,7 +38,7 @@
         secretRef:
           name: flux-git-auth
         ref:
-          branch: main
+          semver: "v*"
   loop: "{{ self_saas_projects }}"
 
 - name: Create Kustomization for each app repo
@@ -58,7 +58,6 @@
           kind: GitRepository
           name: "{{ item.name }}"
           namespace: "{{ item.name }}"
-          tag: "v*"
         validation: client
         postBuild:
           substitute:
