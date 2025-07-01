@@ -58,9 +58,8 @@
           kind: GitRepository
           name: "{{ item.name }}"
           namespace: "{{ item.name }}"
-        validation: client
-        ref:
           tag: "v*"
+        validation: client
         postBuild:
           substitute:
             __IMG_TAG__: "{% raw %}{{ .TagName }}{% endraw %}"
