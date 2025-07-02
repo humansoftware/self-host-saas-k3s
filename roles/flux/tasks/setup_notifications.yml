@@ -1,5 +1,5 @@
 # Notifications
-- name: Create GitHub token secret for Flux Notifications
+- name: Create GitHub token secret for Flux Notifications in each project namespace
   kubernetes.core.k8s:
     state: present
     definition:
@@ -7,10 +7,11 @@
       kind: Secret
       metadata:
         name: flux-notify-auth
-        namespace: flux-system
+        namespace: "{{ item.name }}"
       stringData:
         token: "{{ github_pat }}"
     wait: true
+  loop: "{{ self_saas_projects }}"
 
 - name: Create Flux GitHub Provider for each app repo
   kubernetes.core.k8s:
@@ -48,8 +49,5 @@
         suspend: false
         eventMetadata:
           summary: "Flux status for {{ item.name }}"
-        statusTemplate: |
-          {% raw %}{{ .Message }} — [View on Weave-Gitops](https://localhost:9001/kustomizations/flux-system/{% endraw %}{{ item.name }}{% raw %}){% endraw %}
-
 
   loop: "{{ self_saas_projects }}"
