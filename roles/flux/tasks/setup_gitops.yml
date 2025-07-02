@@ -1,3 +1,13 @@
+- name: Ensure app namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ item.name }}"
+  loop: "{{ self_saas_projects }}"
+
 - name: Create GitHub token secret for Flux (HTTPS auth) in each app namespace
   kubernetes.core.k8s:
     state: present
@@ -11,16 +21,6 @@
         username: "{{ flux_github_username }}"
         password: "{{ github_pat }}"
     wait: true
-  loop: "{{ self_saas_projects }}"
-
-- name: Ensure app namespace exists
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: "{{ item.name }}"
   loop: "{{ self_saas_projects }}"
 
 - name: Create GitRepository for each app repo
@@ -61,5 +61,5 @@
         validation: client
         postBuild:
           substitute:
-            __IMG_TAG__: "{% raw %}{{ .TagName }}{% endraw %}"
+            IMAGE_TAG: "{% raw %}{{ .TagName }}{% endraw %}"
   loop: "{{ self_saas_projects }}"
