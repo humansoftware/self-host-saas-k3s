@@ -1,10 +1,21 @@
 {% raw %}
-message: |
-  Application {{.app.metadata.name}} has been deployed.
-  Sync status: {{.app.status.sync.status}}
-  Revision: {{.app.satus.sync.revision}}
-github:
-  status:
-    state: "{{ 'success' if .app.status.sync.status == 'Synced' else 'failure' }}"
-    label: "Argo CD"
+template.app-sync-status: |
+  message: |
+    Application {{.app.metadata.name}} sync status: {{.app.status.sync.status}}
+    Health status: {{.app.status.health.status}}
+    {{ if .app.status.operationState }}Operation phase: {{.app.status.operationState.phase}}{{ end }}
+    {{ if .app.status.sync.status == "OutOfSync" }}Last sync result: {{.app.status.operationState.message}}{{ end }}
+  github:
+    status:
+      state: "{{ if eq .app.status.sync.status \"Synced\" }}success{{ else if eq .app.status.sync.status \"OutOfSync\" }}failure{{ else }}pending{{ end }}"
+      label: "Argo CD Sync"
+
+template.app-health-status: |
+  message: |
+    Application {{.app.metadata.name}} health status: {{.app.status.health.status}}
+    Sync status: {{.app.status.sync.status}}
+  github:
+    status:
+      state: "{{ if eq .app.status.health.status \"Healthy\" }}success{{ else if eq .app.status.health.status \"Degraded\" }}failure{{ else }}pending{{ end }}"
+      label: "Argo CD Health"
 {% endraw %}

@@ -7,7 +7,7 @@ spec:
   secretName: mailu-certificates
   issuerRef:
     name: {{ cert_issuer_name }}
-    kind: {{ mailu_cert_issuer_kind }}
+    kind: ClusterIssuer
   dnsNames:
 {% for project in self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list %}
     - {{ project.domain }}

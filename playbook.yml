@@ -48,8 +48,6 @@
       tags: harbor
     - role: argocd
       tags: argocd
-    # - role: flux
-    #   tags: flux
     - role: github_actions
       tags: github_actions
     - role: monitoring

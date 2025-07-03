@@ -34,7 +34,5 @@
         notifiers:
           service.github: |
             token: $token
-        templates:
-          app-deployment-status: "{{ lookup('template', 'argocd_notification_template.yaml.j2') }}"
-        triggers:
-          on-deployed: "{{ lookup('template', 'argocd_notification_trigger.yaml.j2') }}"
+        templates: "{{ lookup('template', 'argocd_notification_template.yaml.j2') }}"
+        triggers: "{{ lookup('template', 'argocd_notification_trigger.yaml.j2') }}"
