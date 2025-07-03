@@ -1,0 +1,10 @@
+{% raw %}
+message: |
+  Application {{.app.metadata.name}} has been deployed.
+  Sync status: {{.app.status.sync.status}}
+  Revision: {{.app.satus.sync.revision}}
+github:
+  status:
+    state: "{{ 'success' if .app.status.sync.status == 'Synced' else 'failure' }}"
+    label: "Argo CD"
+{% endraw %}

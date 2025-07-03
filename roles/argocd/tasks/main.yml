@@ -1,0 +1,6 @@
+---
+- name: Install Argo CD
+  ansible.builtin.include_tasks: install_argocd.yml
+
+# - name: Setup GitOps
+#   ansible.builtin.include_tasks: setup_gitops.yml

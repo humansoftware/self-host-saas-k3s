@@ -4,10 +4,7 @@
       {{ (self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list)[0].domain }}
   when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
 
-- name: Set cert-manager issuer and domain logic
-  ansible.builtin.set_fact:
-    mailu_cert_issuer_name: "{{ 'letsencrypt-prod' if environment_type == 'prod' else 'selfsigned-cluster-issuer' }}"
-    mailu_cert_issuer_kind: "ClusterIssuer"
+
 
 - name: Create self-signed ClusterIssuer for local testing
   kubernetes.core.k8s:

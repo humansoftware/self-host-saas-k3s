@@ -12,3 +12,5 @@ ssh_port_rewritten: 2222 # The ansible role will make sure the server SSH port i
 
 cassandra_namespace: cassandra
 elasticsearch_namespace: elasticsearch
+
+common_admin_username: "admin"

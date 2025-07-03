@@ -6,7 +6,7 @@ metadata:
 spec:
   secretName: mailu-certificates
   issuerRef:
-    name: {{ mailu_cert_issuer_name }}
+    name: {{ cert_issuer_name }}
     kind: {{ mailu_cert_issuer_kind }}
   dnsNames:
 {% for project in self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list %}

@@ -1,8 +1,5 @@
 harbor_version: "1.16.4"                # Set to your desired Harbor chart version
 
-
-harbor_admin_password: "ChangeMe123!"   # Change to a secure password
-
 harbor_storage_class: "longhorn-single-replica"        # Set to your cluster's storage class
 harbor_registry_size: "6Gi"
 harbor_database_size: "200Mi"

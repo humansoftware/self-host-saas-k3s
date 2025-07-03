@@ -1,0 +1,5 @@
+{% raw %}
+- when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
+  send:
+  - app-deployment-status
+{% endraw %}

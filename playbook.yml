@@ -46,8 +46,10 @@
       tags: longhorn
     - role: harbor
       tags: harbor
-    - role: flux
-      tags: flux
+    - role: argocd
+      tags: argocd
+    # - role: flux
+    #   tags: flux
     - role: github_actions
       tags: github_actions
     - role: monitoring

@@ -1,0 +1,56 @@
+---
+- name: Create GitHub token secret for Argo CD
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: argocd-git-auth
+        namespace: argocd
+        labels:
+          argocd.argoproj.io/secret-type: repository
+      stringData:
+        type: git
+        url: https://github.com
+        username: "{{ flux_github_username }}"
+        password: "{{ github_pat }}"
+
+- name: Ensure app namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ item.name }}"
+  loop: "{{ self_saas_projects }}"
+
+- name: Create Argo CD Application for each app repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: argoproj.io/v1alpha1
+      kind: Application
+      metadata:
+        name: "{{ item.name }}"
+        namespace: argocd
+        annotations:
+          argocd-image-updater.argoproj.io/image-list: "{{ item.name }}={{ harbor_hostname }}/{{ item.name }}/app"
+          argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/argocd-git-auth
+          argocd-image-updater.argoproj.io/{{ item.name }}.update-strategy: semver
+          notifications.argoproj.io/subscribe.on-deployed.github: ""
+      spec:
+        project: default
+        source:
+          repoURL: "{{ item.github_repo_http_url }}"
+          targetRevision: HEAD
+          path: "{{ item.path }}"
+        destination:
+          server: https://kubernetes.default.svc
+          namespace: "{{ item.name }}"
+        syncPolicy:
+          automated:
+            prune: true
+            selfHeal: true
+  loop: "{{ self_saas_projects }}"
