@@ -1,3 +1,4 @@
+{% raw %} 
 template.app-sync-status: |
   message: |
     Application {{.app.metadata.name}} sync status: {{.app.status.sync.status}}
@@ -26,3 +27,4 @@ template.app-manifest-generation-error: |
     status:
       state: "failure"
       label: "Argo CD Manifest Error"
+{% endraw %}
