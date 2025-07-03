@@ -13,7 +13,7 @@
       stringData:
         type: git
         url: https://github.com
-        username: "{{ flux_github_username }}"
+        username: "{{ argocd_github_username }}"
         password: "{{ github_pat }}"
 
 - name: Ensure app namespace exists
@@ -35,11 +35,7 @@
       metadata:
         name: "{{ item.name }}"
         namespace: argocd
-        annotations:
-          argocd-image-updater.argoproj.io/image-list: "{{ item.name }}={{ harbor_hostname }}/{{ item.name }}/app"
-          argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/argocd-git-auth
-          argocd-image-updater.argoproj.io/{{ item.name }}.update-strategy: semver
-          notifications.argoproj.io/subscribe.on-deployed.github: ""
+        annotations: "{{ lookup('template', 'argocd_application_annotations.yaml.j2') | from_yaml }}"
       spec:
         project: default
         source:
