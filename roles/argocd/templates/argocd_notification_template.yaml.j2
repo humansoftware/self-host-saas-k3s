@@ -1,4 +1,3 @@
-{% raw %}
 template.app-sync-status: |
   message: |
     Application {{.app.metadata.name}} sync status: {{.app.status.sync.status}}
@@ -18,4 +17,12 @@ template.app-health-status: |
     status:
       state: "{{ if eq .app.status.health.status \"Healthy\" }}success{{ else if eq .app.status.health.status \"Degraded\" }}failure{{ else }}pending{{ end }}"
       label: "Argo CD Health"
-{% endraw %}
+
+template.app-manifest-generation-error: |
+  message: |
+    Application {{.app.metadata.name}} failed to generate manifests.
+    Error: {{.app.status.operationState.message}}
+  github:
+    status:
+      state: "failure"
+      label: "Argo CD Manifest Error"

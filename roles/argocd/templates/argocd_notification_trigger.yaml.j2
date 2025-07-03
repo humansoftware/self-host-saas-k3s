@@ -18,4 +18,9 @@ trigger.on-sync-running: |
   - when: app.status.operationState.phase == 'Running'
     send:
     - app-sync-status
+
+trigger.on-unknown-sync-status: |
+  - when: app.status.sync.status == 'Unknown'
+    send:
+    - app-manifest-generation-error
 {% endraw %}
