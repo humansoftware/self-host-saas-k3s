@@ -25,9 +25,10 @@
             url: "https://{{ harbor_hostname }}"
             username: "{{ harbor_admin_username }}"
             password: "{{ harbor_admin_password }}"
-      notifications:
-        enabled: true
+        params:
+          server.insecure: true
         secret:
+          argocdServerAdminPassword: "{{ argocd_admin_password | password_hash('bcrypt') }}"
           items:
             token: "{{ github_pat }}"
         notifiers:

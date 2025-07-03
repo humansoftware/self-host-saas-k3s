@@ -30,8 +30,6 @@ echo "Longhorn: http://localhost:8080"
 kubectl -n kube-system port-forward svc/traefik 8081:80 &
 echo "Harbor: http://localhost:8081 (admin/<your password>)"
 
-
-
 # Forward Mailu  UI
 kubectl -n mailu port-forward svc/mailu-front 8083:80 &
 echo "Mailu Webmail: http://localhost:8083/webmail (admin@<your domain>/<your password>)"
