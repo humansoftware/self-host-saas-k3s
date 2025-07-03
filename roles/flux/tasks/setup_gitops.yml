@@ -27,7 +27,7 @@
   kubernetes.core.k8s:
     state: present
     definition:
-      apiVersion: source.toolkit.fluxcd.io/v1beta2
+      apiVersion: source.toolkit.fluxcd.io/v1
       kind: GitRepository
       metadata:
         name: "{{ item.name }}"
@@ -45,7 +45,7 @@
   kubernetes.core.k8s:
     state: present
     definition:
-      apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+      apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
       metadata:
         name: "{{ item.name }}"
@@ -58,8 +58,7 @@
           kind: GitRepository
           name: "{{ item.name }}"
           namespace: "{{ item.name }}"
-        validation: client
         postBuild:
           substitute:
-            IMAGE_TAG: "{% raw %}{{ .TagName }}{% endraw %}"
+            IMAGE_TAG: $(tag)
   loop: "{{ self_saas_projects }}"
