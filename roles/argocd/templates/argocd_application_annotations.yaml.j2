@@ -1,0 +1,4 @@
+argocd-image-updater.argoproj.io/image-list: "{{ item.name }}={{ harbor_hostname }}/{{ item.name }}/{{ item.name }}"
+argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/argocd-git-auth
+notifications.argoproj.io/subscribe.on-deployed.github: ""
+argocd-image-updater.argoproj.io/{{ item.name }}.update-strategy: semver
