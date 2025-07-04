@@ -32,6 +32,7 @@
           items:
             token: "{{ github_pat }}"
       notifications:
+        argocdUrl: http://localhost:8082
         notifiers:
           service.webhook.github-status: "{{ lookup('template', 'service_webhook_github_status.yaml.j2') }}"
         templates:
@@ -44,3 +45,70 @@
           trigger.on-sync-status-unknown: "{{ lookup('template', 'triggers/on-sync-status-unknown.yaml.j2') }}"
           trigger.on-unknown-sync-status: "{{ lookup('template', 'triggers/on-unknown-sync-status.yaml.j2') }}"
           trigger.on-sync-succeeded: "{{ lookup('template', 'triggers/on-sync-succeeded.yaml.j2') }}"
+
+- name: Get Harbor TLS secret from Kubernetes (for Image Updater CA)
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    namespace: "{{ harbor_namespace }}"
+    name: "{{ harbor_tls_secret_name }}"
+  register: harbor_tls_secret
+  delegate_to: localhost
+  become: false
+
+- name: Create Secret for Harbor Image Updater credentials
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: argocd-image-updater-harbor-credentials
+        namespace: argocd
+      stringData:
+        username: "{{ harbor_admin_username }}"
+        password: "{{ harbor_admin_password }}"
+
+- name: Create secret with Harbor CA certificate
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: harbor-ca-cert
+        namespace: argocd
+      data:
+        ca.crt: "{{ harbor_tls_secret.resources[0].data['ca.crt'] }}"
+
+- name: Install Argo CD Image Updater via Helm
+  kubernetes.core.helm:
+    name: argocd-image-updater
+    chart_ref: argo/argocd-image-updater
+    release_namespace: argocd
+    create_namespace: true
+    state: present
+    values:
+      config:
+        argocd:
+          serverAddress: argocd-server.argocd.svc.cluster.local:80
+          plaintext: true
+          insecure: true
+        registries:
+          - name: harbor
+            api_url: "https://{{ harbor_hostname }}"
+            prefix: "{{ harbor_hostname }}/"
+            credentials: "secret:argocd-image-updater-harbor-credentials#username:password"
+      replicaCount: 1
+      volumeMounts:
+        - name: custom-ca
+          mountPath: /etc/ssl/certs/harbor-ca.crt
+          subPath: ca.crt
+          readOnly: true
+      volumes:
+        - name: custom-ca
+          secret:
+            secretName: harbor-ca-cert
+      extraEnv:
+        - name: SSL_CERT_FILE
+          value: /etc/ssl/certs/harbor-ca.crt

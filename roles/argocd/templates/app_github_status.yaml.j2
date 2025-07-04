@@ -9,7 +9,7 @@ message: |
 webhook:
   github-status:
     method: POST
-    path: /repos/{{call .repo.FullNameByRepoURL .app.spec.source.repoURL}}/statuses/{{.app.status.sync.revision}}
+    path: /repos/{{call .repo.FullNameByRepoURL .app.spec.source.repoURL}}/statuses/{{.app.status.operationState.syncResult.revision}}
     body: |
       {
         {{if eq .app.status.operationState.phase "Running"}} "state": "pending"{{else if eq .app.status.operationState.phase "Succeeded"}} "state": "success"{{else if eq .app.status.operationState.phase "Error"}} "state": "error"{{else if eq .app.status.operationState.phase "Failed"}} "state": "error"{{else}} "state": "pending"{{end}},
