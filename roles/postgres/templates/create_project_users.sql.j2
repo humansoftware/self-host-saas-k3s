@@ -1,11 +1,12 @@
 {% for project in self_saas_projects if project.postgres is defined and project.postgres.enabled %}
 -- Create user if not exists
-DO $
+DO $$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '{{ project.postgres.username }}') THEN
     CREATE USER {{ project.postgres.username | quote }} WITH PASSWORD '{{ project.postgres.password }}';
   END IF;
-END$;
+END
+$$;
 
 -- Always set password
 ALTER USER {{ project.postgres.username | quote }} WITH PASSWORD '{{ project.postgres.password }}';
