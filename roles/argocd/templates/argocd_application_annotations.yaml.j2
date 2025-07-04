@@ -3,11 +3,13 @@ argocd-image-updater.argoproj.io/image-list: "{% for image_name in item.tracked_
 {% for image_name in item.tracked_deployment_images %}
 argocd-image-updater.argoproj.io/{{ image_name }}.update-strategy: semver
 argocd-image-updater.argoproj.io/{{ image_name }}.allow-tags: "regexp:^v.*"
+argocd-image-updater.argoproj.io/{{ image_name }}.force-update: "true"
 {% endfor %}
 {% else %}
 argocd-image-updater.argoproj.io/image-list: "{{ item.name }}={{ harbor_hostname }}/{{ item.name }}/{{ item.name }}"
 argocd-image-updater.argoproj.io/{{ item.name }}.update-strategy: semver
 argocd-image-updater.argoproj.io/{{ item.name }}.allow-tags: "regexp:^v.*"
+argocd-image-updater.argoproj.io/{{ item.name }}.force-update: "true"
 {% endif %}
 notifications.argoproj.io/subscribe.on-deployed.github-status: null
 notifications.argoproj.io/subscribe.on-health-degraded.github-status: ""
