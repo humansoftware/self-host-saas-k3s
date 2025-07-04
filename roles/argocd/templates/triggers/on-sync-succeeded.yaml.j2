@@ -1,0 +1,13 @@
+{% raw %}
+- description: Application syncing has succeeded
+  send: 
+    - github-status
+  with:
+    repo: "{{ app.spec.source.repoURL }}"
+    revision: "{{ app.status.operationState.operation.sync.revision }}"
+    token: "{{ .context.argocd.token }}"
+    state: "success"
+    target_url: "{{ .context.argocdUrl }}/applications/{{ app.metadata.name }}"
+    description: "ArgoCD sync succeeded"
+  when: app.status.operationState != nil and app.status.operationState.phase in ['Succeeded']
+{% endraw %}

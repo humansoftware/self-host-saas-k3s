@@ -1,0 +1,20 @@
+{% raw %}
+message: |
+  {
+    "state": "{{ .state }}",
+    "target_url": "{{ .target_url }}",
+    "description": "ArgoCD sync {{ .description }}",
+    "context": "argo-cd"
+  }
+webhook:
+  github-status:
+    method: POST
+    path: /repos/{{call .repo.FullNameByRepoURL .app.spec.source.repoURL}}/statuses/{{.app.status.operationState.syncResult.revision}}
+    body: |
+      {
+        {{if eq .app.status.operationState.phase "Running"}} "state": "pending"{{else if eq .app.status.operationState.phase "Succeeded"}} "state": "success"{{else if eq .app.status.operationState.phase "Error"}} "state": "error"{{else if eq .app.status.operationState.phase "Failed"}} "state": "error"{{else}} "state": "pending"{{end}},
+        "description": "ArgoCD",
+        "target_url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
+        "context": "continuous-delivery/{{.app.metadata.name}}"
+      }
+{% endraw %}

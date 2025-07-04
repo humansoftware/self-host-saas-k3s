@@ -30,10 +30,6 @@ echo "Longhorn: http://localhost:8080"
 kubectl -n kube-system port-forward svc/traefik 8081:80 &
 echo "Harbor: http://localhost:8081 (admin/<your password>)"
 
-# Forward Flux UI (Weave GitOps)
-kubectl -n flux-system port-forward svc/weave-gitops 9001:9001 &
-echo "Flux UI: http://localhost:9001 (admin/<your password>)"
-
 # Forward Mailu  UI
 kubectl -n mailu port-forward svc/mailu-front 8083:80 &
 echo "Mailu Webmail: http://localhost:8083/webmail (admin@<your domain>/<your password>)"
@@ -50,6 +46,10 @@ echo "Cassandra: localhost:9042"
 # Port-forward Elasticsearch service to local port 9200
 kubectl port-forward svc/elasticsearch-master -n elasticsearch 9200:9200 &
 echo "Elasticsearch: http://localhost:9200"
+
+# Forward Argo CD UI
+kubectl -n argocd port-forward svc/argocd-server 8082:80 &
+echo "Argo CD: http://localhost:8082 (admin/see secrets for password)"
 
 # Wait for background jobs
 wait

@@ -4,7 +4,7 @@ This guide explains how to deploy and manage applications in your Self-Host SaaS
 
 ## Overview
 
-The deployment and management of applications in this cluster follows a GitOps approach using Flux for Continuous Deployment (CD) and GitHub Actions for Continuous Integration (CI).
+The deployment and management of applications in this cluster follows a GitOps approach using Argo CD for Continuous Deployment (CD) and GitHub Actions for Continuous Integration (CI).
 
 ## Example Application
 
@@ -25,7 +25,7 @@ For an example configuration, see [secrets.example.yml](..https://github.com/hum
 ### GitHub Authentication
 
 The cluster needs access to your GitHub repositories for two purposes:
-1. Flux needs to clone repositories to deploy applications
+1. Argo CD needs to clone repositories to deploy applications
 2. GitHub Actions need to interact with GitHub's API
 
 To enable this access:
@@ -34,7 +34,7 @@ To enable this access:
    - `workflow` scope for GitHub Actions
 2. Add this token to the `github_pat` field in `group_vars/all/secrets.yml`
 
-The token will be securely stored and used by both Flux and GitHub Actions runners.
+The token will be securely stored and used by both Argo CD and GitHub Actions runners.
 
 ## Application Structure
 
@@ -59,7 +59,7 @@ To publish Docker images to Harbor:
 ### Continuous Deployment (CD)
 
 #### Kubernetes Configuration
-- Applications must include Kubernetes Custom Resource Definitions (CRDs) in the `flux` folder
+- Applications must include Kubernetes Custom Resource Definitions (CRDs) in the `deployment` folder
 - These configurations define your application's components:
   - Jobs
   - Services
@@ -68,26 +68,26 @@ To publish Docker images to Harbor:
 - The configurations can reference Docker images published by your CI pipelines
 
 #### Kustomize Integration
-- Flux uses Kustomize for managing Kubernetes configurations
+- Argo CD uses Kustomize for managing Kubernetes configurations
 - Each application should include a `kustomization.yaml` file that:
   - References the Kubernetes manifests
   - Defines common labels and annotations
   - Manages environment-specific configurations
 - For more information about Kustomize, see the [official documentation](https://kustomize.io/)
-- To learn how Flux integrates with Kustomize, refer to the [Flux Kustomize documentation](https://fluxcd.io/flux/components/kustomize/)
+- To learn how Argo CD integrates with Kustomize, refer to the [Argo CD Kustomize documentation](https://argo-cd.readthedocs.io/en/stable/user-guide/kustomize/)
 
-#### Flux UI - Weave-gitops
+#### Argo CD UI
 
-Execute the following command to create a port-forward for the flux UI:
+Execute the following command to create a port-forward for the Argo CD UI:
 ```bash
-kubectl -n flux-system port-forward svc/weave-gitops 9001:9001
+kubectl -n argocd port-forward svc/argocd-server 8082:80
 ```
 
-Visit [http://localhost:9001](http://localhost:9001) and log in with admin and the password you specified in secrets.
+Visit [http://localhost:8082](http://localhost:8082) and log in with admin and the password you specified in secrets.
 
 ## Best Practices
 
-1. Keep your Kubernetes configurations in the `flux` folder organized and well-documented
+1. Keep your Kubernetes configurations in the `deployment` folder organized and well-documented
 2. Ensure your GitHub Actions workflows are properly configured for self-hosted runners
 3. Securely manage your Harbor credentials using GitHub secrets
 4. Follow the example application structure for consistency
