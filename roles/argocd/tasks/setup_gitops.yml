@@ -1,20 +1,21 @@
 ---
-- name: Create GitHub token secret for Argo CD
+- name: Create Argo CD repository credentials for all repositories
   kubernetes.core.k8s:
     state: present
     definition:
       apiVersion: v1
       kind: Secret
       metadata:
-        name: argocd-git-auth
+        name: "repo-creds-{{ item.name }}"
         namespace: argocd
         labels:
           argocd.argoproj.io/secret-type: repository
       stringData:
         type: git
-        url: https://github.com
+        url: "{{ item.github_repo_http_url }}"
         username: "{{ argocd_github_username }}"
         password: "{{ github_pat }}"
+  loop: "{{ self_saas_projects }}"
 
 - name: Ensure app namespace exists
   kubernetes.core.k8s:

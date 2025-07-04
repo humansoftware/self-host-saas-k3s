@@ -5,7 +5,7 @@ This folder contains ready-to-use scripts and configuration examples to help you
 ## Contents
 
 - **sample_ssh_config**: Example SSH config for secure tunneling to your server and K3s API. Copy and adapt entries to your `~/.ssh/config` for easier SSH access and port forwarding.
-- **create_kubectl_port_fwd.sh**: Shell script to start all recommended `kubectl port-forward` commands for accessing cluster UIs (Grafana, Prometheus, Longhorn, Harbor, Flux) on your local machine. Run with `zsh` for convenience.
+- **create_kubectl_port_fwd.sh**: Shell script to start all recommended `kubectl port-forward` commands for accessing cluster UIs (Grafana, Prometheus, Longhorn, Harbor, ArgoCD) on your local machine. Run with `zsh` for convenience.
 
 ## Usage
 
