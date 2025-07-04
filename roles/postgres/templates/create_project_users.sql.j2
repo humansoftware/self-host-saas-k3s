@@ -13,4 +13,7 @@ ALTER USER {{ project.postgres.username | quote }} WITH PASSWORD '{{ project.pos
 
 -- Grant privileges
 GRANT ALL PRIVILEGES ON DATABASE "{{ project.name }}" TO {{ project.postgres.username | quote }};
+
+-- Grant schema privileges for migrations
+GRANT USAGE, CREATE ON SCHEMA public TO {{ project.postgres.username | quote }};
 {% endfor %}
