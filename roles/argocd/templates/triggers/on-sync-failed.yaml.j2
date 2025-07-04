@@ -1,0 +1,10 @@
+{% raw %}
+- description: Application syncing has failed
+  send: 
+    - github-status
+  with:
+    repo: "{{ app.metadata.annotations['notifications.argoproj.io/repo'] }}"
+    revision: "{{ app.status.sync.revision }}"
+    token: "{{ .context.argocd.token }}"
+  when: app.status.operationState != nil and app.status.operationState.phase in ['Error', 'Failed']
+{% endraw %}

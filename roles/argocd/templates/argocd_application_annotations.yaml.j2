@@ -1,9 +1,10 @@
 argocd-image-updater.argoproj.io/image-list: "{{ item.name }}={{ harbor_hostname }}/{{ item.name }}/{{ item.name }}"
 argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/argocd-git-auth
-notifications.argoproj.io/subscribe.on-deployed.github: null
-notifications.argoproj.io/subscribe.on-health-degraded.github: ""
-notifications.argoproj.io/subscribe.on-sync-failed.github: ""
-notifications.argoproj.io/subscribe.on-sync-running.github: ""
-notifications.argoproj.io/subscribe.on-sync-succeeded.github: ""
-notifications.argoproj.io/subscribe.on-unknown-sync-status.github: ""
+notifications.argoproj.io/subscribe.on-deployed.github-status: null
+notifications.argoproj.io/subscribe.on-health-degraded.github-status: ""
+notifications.argoproj.io/subscribe.on-sync-failed.github-status: ""
+notifications.argoproj.io/subscribe.on-sync-running.github-status: ""
+notifications.argoproj.io/subscribe.on-sync-succeeded.github-status: ""
+notifications.argoproj.io/subscribe.on-unknown-sync-status.github-status: ""
+notifications.argoproj.io/repo: "{{ item.github_repo_http_url | regex_replace('https://github.com/', '') | regex_replace('.git$', '') }}"
 argocd-image-updater.argoproj.io/{{ item.name }}.update-strategy: semver

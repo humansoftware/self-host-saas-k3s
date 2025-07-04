@@ -1,0 +1,10 @@
+{% raw %}
+- description: Application has degraded
+  send: 
+    - github-status
+  with:
+    repo: "{{ app.metadata.annotations['notifications.argoproj.io/repo'] }}"
+    revision: "{{ app.status.sync.revision }}"
+    token: "{{ .context.argocd.token }}"
+  when: app.status.health.status == 'Degraded'
+{% endraw %}

@@ -31,9 +31,16 @@
           argocdServerAdminPassword: "{{ argocd_admin_password | password_hash('bcrypt') }}"
           items:
             token: "{{ github_pat }}"
+      notifications:
         notifiers:
-          service.github: |
-            token: $token
-        notifications:
-          templates: "{{ lookup('template', 'argocd_notification_template.yaml.j2') | from_yaml }}"
-          triggers: "{{ lookup('template', 'argocd_notification_trigger.yaml.j2') | from_yaml }}"
+          service.webhook.github-status: "{{ lookup('template', 'service_webhook_github_status.yaml.j2') }}"
+        templates:
+          template.github-status: "{{ lookup('template', 'app_github_status.yaml.j2') }}"
+        triggers:
+          trigger.on-deployed: "{{ lookup('template', 'triggers/on-deployed.yaml.j2') }}"
+          trigger.on-health-degraded: "{{ lookup('template', 'triggers/on-health-degraded.yaml.j2') }}"
+          trigger.on-sync-failed: "{{ lookup('template', 'triggers/on-sync-failed.yaml.j2') }}"
+          trigger.on-sync-running: "{{ lookup('template', 'triggers/on-sync-running.yaml.j2') }}"
+          trigger.on-sync-status-unknown: "{{ lookup('template', 'triggers/on-sync-status-unknown.yaml.j2') }}"
+          trigger.on-unknown-sync-status: "{{ lookup('template', 'triggers/on-unknown-sync-status.yaml.j2') }}"
+          trigger.on-sync-succeeded: "{{ lookup('template', 'triggers/on-sync-succeeded.yaml.j2') }}"
