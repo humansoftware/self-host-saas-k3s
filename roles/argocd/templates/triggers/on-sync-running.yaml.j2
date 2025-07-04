@@ -3,8 +3,11 @@
   send: 
     - github-status
   with:
-    repo: "{{ app.metadata.annotations['notifications.argoproj.io/repo'] }}"
-    revision: "{{ app.status.sync.revision }}"
+    repo: "{{ app.spec.source.repoURL }}"
+    revision: "{{ app.status.operationState.operation.sync.revision }}"
     token: "{{ .context.argocd.token }}"
+    state: "pending"
+    target_url: "{{ .context.argocdUrl }}/applications/{{ app.metadata.name }}"
+    description: "ArgoCD sync running"
   when: app.status.operationState != nil and app.status.operationState.phase in ['Running']
 {% endraw %}

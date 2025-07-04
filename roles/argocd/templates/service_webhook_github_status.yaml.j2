@@ -1,13 +1,4 @@
-service.webhook.github-status: |
-  url: https://api.github.com/repos/{{'{{ repo }}'}}/statuses/{{'{{ revision }}'}}
-  method: POST
-  headers:
-    - name: Authorization
-      value: token {{ github_pat }}
-  body: |
-    {
-      "state": "{{'{{ state }}'}}",
-      "target_url": "{{'{{ target_url }}'}}",
-      "description": "ArgoCD sync {{'{{ description }}'}}",
-      "context": "argo-cd"
-    }
+url: https://api.github.com
+headers:
+  - name: Authorization
+    value: token {{ github_pat }}
