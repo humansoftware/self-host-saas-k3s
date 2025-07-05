@@ -21,12 +21,12 @@
   delegate_to: localhost
   run_once: true
 
-- name: Ensure previous psql-client pod is absent before creation
+- name: Ensure previous psql-client-create-users pod is absent before creation
   kubernetes.core.k8s:
     state: absent
     api_version: v1
     kind: Pod
-    name: psql-client
+    name: psql-client-create-users
     namespace: "{{ postgres_namespace }}"
   delegate_to: localhost
   run_once: true
@@ -38,7 +38,7 @@
       apiVersion: v1
       kind: Pod
       metadata:
-        name: psql-client
+        name: psql-client-create-users
         namespace: "{{ postgres_namespace }}"
       spec:
         restartPolicy: Never
@@ -70,12 +70,12 @@
   delegate_to: localhost
   run_once: true
 
-- name: Wait for psql-client pod to complete
+- name: Wait for psql-client-create-users pod to complete
   kubernetes.core.k8s_info:
     api_version: v1
     kind: Pod
     namespace: "{{ postgres_namespace }}"
-    name: psql-client
+    name: psql-client-create-users
   register: pod_info
   until: pod_info.resources[0].status.phase == 'Succeeded'
   retries: 5
@@ -83,12 +83,12 @@
   delegate_to: localhost
   run_once: true
 
-- name: Clean up psql-client pod
+- name: Clean up psql-client-create-users pod
   kubernetes.core.k8s:
     state: absent
     api_version: v1
     kind: Pod
-    name: psql-client
+    name: psql-client-create-users
     namespace: "{{ postgres_namespace }}"
   delegate_to: localhost
   run_once: true

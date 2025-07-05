@@ -10,3 +10,6 @@
 
 - name: Create postgres users
   ansible.builtin.include_tasks: create_users.yml
+
+- name: Grant user migration permissions
+  ansible.builtin.include_tasks: create_user_migration_permissions.yml

@@ -2,7 +2,7 @@
   ansible.builtin.template:
     src: create_project_databases.sql.j2
     dest: /tmp/create_project_databases.sql
-    mode: '0600'
+    mode: "0600"
   delegate_to: localhost
   run_once: true
 
@@ -21,12 +21,12 @@
   delegate_to: localhost
   run_once: true
 
-- name: Ensure previous psql-client-db pod is absent before creation
+- name: Ensure previous psql-client-create-databases pod is absent before creation
   kubernetes.core.k8s:
     state: absent
     api_version: v1
     kind: Pod
-    name: psql-client-db
+    name: psql-client-create-databases
     namespace: "{{ postgres_namespace }}"
   delegate_to: localhost
   run_once: true
@@ -38,7 +38,7 @@
       apiVersion: v1
       kind: Pod
       metadata:
-        name: psql-client-db
+        name: psql-client-create-databases
         namespace: "{{ postgres_namespace }}"
       spec:
         restartPolicy: Never
@@ -70,12 +70,12 @@
   delegate_to: localhost
   run_once: true
 
-- name: Wait for psql-client-db pod to complete
+- name: Wait for psql-client-create-databases pod to complete
   kubernetes.core.k8s_info:
     api_version: v1
     kind: Pod
     namespace: "{{ postgres_namespace }}"
-    name: psql-client-db
+    name: psql-client-create-databases
   register: pod_info_db
   until: pod_info_db.resources[0].status.phase == 'Succeeded'
   retries: 5
