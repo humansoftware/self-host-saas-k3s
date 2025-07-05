@@ -1,0 +1,2 @@
+# Default number of GitHub Actions runners per project
+github_actions_runner_replicas_default: 1

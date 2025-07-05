@@ -4,7 +4,7 @@ metadata:
   name: {{ item.name }}-runner
   namespace: {{ item.name }}
 spec:
-  replicas: 1
+  replicas: {{ item.github_actions.num_runners | default(github_actions_runner_replicas_default) }}
   template:
     spec:
       serviceAccountName: github-actions-runner-{{ item.name }}
