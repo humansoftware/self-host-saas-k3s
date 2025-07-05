@@ -1,0 +1,4 @@
+{% for project in self_saas_projects if project.postgres is defined and project.postgres.enabled %}
+-- Grant schema privileges for migrations on the project's database
+GRANT USAGE, CREATE ON SCHEMA public TO {{ project.postgres.username | quote }};
+{% endfor %}

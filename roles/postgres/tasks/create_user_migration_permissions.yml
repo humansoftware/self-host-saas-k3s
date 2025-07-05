@@ -1,0 +1,121 @@
+- name: Render project user migration permissions SQL from template
+  ansible.builtin.template:
+    src: create_user_migration_permissions.sql.j2
+    dest: /tmp/create_user_migration_permissions.sql
+    mode: "0600"
+  delegate_to: localhost
+  run_once: true
+
+- name: Create ConfigMap for project user migration permissions SQL
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: project-user-migration-permissions-sql
+        namespace: "{{ postgres_namespace }}"
+      data:
+        create_user_migration_permissions.sql: |
+          {{ lookup('file', '/tmp/create_user_migration_permissions.sql') | indent(10) }}
+  delegate_to: localhost
+  run_once: true
+
+- name: Ensure previous psql-client-migration-permissions pod is absent before creation
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Pod
+    name: psql-client-migration-permissions
+    namespace: "{{ postgres_namespace }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Run migration permissions SQL in each project's database
+  vars:
+    project_databases: "{{ self_saas_projects | selectattr('postgres.enabled', 'defined') | selectattr('postgres.enabled') | map(attribute='name') | list }}"
+  loop: "{{ project_databases }}"
+  loop_control:
+    loop_var: project_db
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: psql-client-migration-permissions-{{ project_db }}
+        namespace: "{{ postgres_namespace }}"
+      spec:
+        restartPolicy: Never
+        containers:
+          - name: psql
+            image: "docker.io/bitnami/postgresql:{{ postgres_client_pod_image_tag }}"
+            env:
+              - name: PGPASSWORD
+                value: "{{ postgres_admin_password }}"
+            command: ["psql"]
+            args:
+              - "-h"
+              - "postgres-postgresql"
+              - "-U"
+              - "postgres"
+              - "-d"
+              - "{{ project_db }}"
+              - "-f"
+              - "/tmp/create_user_migration_permissions.sql"
+            volumeMounts:
+              - name: sql
+                mountPath: /tmp/create_user_migration_permissions.sql
+                subPath: create_user_migration_permissions.sql
+        volumes:
+          - name: sql
+            configMap:
+              name: project-user-migration-permissions-sql
+              items:
+                - key: create_user_migration_permissions.sql
+                  path: create_user_migration_permissions.sql
+  delegate_to: localhost
+  run_once: true
+
+- name: Wait for all psql-client-migration-permissions pods to complete
+  vars:
+    project_databases: "{{ self_saas_projects | selectattr('postgres.enabled', 'defined') | selectattr('postgres.enabled') | map(attribute='name') | list }}"
+  loop: "{{ project_databases }}"
+  loop_control:
+    loop_var: project_db
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ postgres_namespace }}"
+    name: psql-client-migration-permissions-{{ project_db }}
+  register: pod_info_migration
+  until: pod_info_migration.resources[0].status.phase == 'Succeeded'
+  retries: 5
+  delay: 6
+  delegate_to: localhost
+  run_once: true
+
+- name: Clean up all psql-client-migration-permissions pods
+  vars:
+    project_databases: "{{ self_saas_projects | selectattr('postgres.enabled', 'defined') | selectattr('postgres.enabled') | map(attribute='name') | list }}"
+  loop: "{{ project_databases }}"
+  loop_control:
+    loop_var: project_db
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Pod
+    name: psql-client-migration-permissions-{{ project_db }}
+    namespace: "{{ postgres_namespace }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Clean up project user migration permissions SQL ConfigMap
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: ConfigMap
+    name: project-user-migration-permissions-sql
+    namespace: "{{ postgres_namespace }}"
+  delegate_to: localhost
+  run_once: true
