@@ -33,3 +33,6 @@
       initDBConfigMap: "{{ cassandra_init_configmap_name }}"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
+
+- name: Run Cassandra initialization script with cqlsh
+  ansible.builtin.include_tasks: run_init_script.yml

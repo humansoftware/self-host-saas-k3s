@@ -1,0 +1,29 @@
+---
+- name: Run Cassandra initialization script with cqlsh
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: cassandra-init-job
+        namespace: "{{ cassandra_namespace }}"
+      spec:
+        template:
+          spec:
+            containers:
+              - name: cqlsh
+                image: bitnami/cassandra:latest
+                command: ["/bin/bash", "-c"]
+                args:
+                  - |
+                    cqlsh -u cassandra -p '{{ cassandra_admin_password }}' cassandra 9042 -f /init/create_keyspace.cql
+                volumeMounts:
+                  - name: cassandra-init-scripts
+                    mountPath: /init
+            restartPolicy: Never
+            volumes:
+              - name: cassandra-init-scripts
+                configMap:
+                  name: "{{ cassandra_init_configmap_name }}"
+  ignore_errors: true
