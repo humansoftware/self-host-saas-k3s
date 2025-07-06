@@ -21,6 +21,9 @@ spec:
             - name: harbor-ca
               mountPath: /etc/docker/certs.d/harbor.local/ca.crt
               subPath: ca.crt
+            - name: harbor-ca
+              mountPath: /etc/buildkit/certs/harbor.local/ca.crt
+              subPath: ca.crt
       volumes:
         - name: harbor-ca
           secret:
