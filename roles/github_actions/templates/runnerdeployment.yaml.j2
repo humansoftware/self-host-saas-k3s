@@ -19,10 +19,10 @@ spec:
             privileged: true
           volumeMounts:
             - name: harbor-ca
-              mountPath: /etc/docker/certs.d/harbor.local/ca.crt
+              mountPath: /etc/docker/certs.d/{{harbor_domain}}/ca.crt
               subPath: ca.crt
             - name: harbor-ca
-              mountPath: /etc/buildkit/certs/harbor.local/ca.crt
+              mountPath: /etc/docker/certs.d/{{harbor_domain}}:443/ca.crt
               subPath: ca.crt
       volumes:
         - name: harbor-ca
