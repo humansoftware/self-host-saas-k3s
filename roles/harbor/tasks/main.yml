@@ -13,3 +13,9 @@
 
 - name: Create Harbor projects
   ansible.builtin.include_tasks: create_projects.yml
+
+- name: Create Harbor retention policy and cleanup for each project
+  ansible.builtin.include_tasks: create_retention.yml
+  loop: "{{ self_saas_projects }}"
+  loop_control:
+    loop_var: project

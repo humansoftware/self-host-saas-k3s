@@ -1,0 +1,48 @@
+- name: Ensure old retention policy Job is absent
+  kubernetes.core.k8s:
+    state: absent
+    api_version: batch/v1
+    kind: Job
+    name: "create-harbor-retention-{{ project.name | lower | regex_replace('[^a-z0-9-]', '-') }}"
+    namespace: "{{ harbor_namespace }}"
+
+- name: Create Harbor retention policy (get project id and create policy in one Job, with rendered payload)
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: create-harbor-retention-{{ project.name | lower | regex_replace('[^a-z0-9-]', '-') }}
+        namespace: "{{ harbor_namespace }}"
+      spec:
+        backoffLimit: 1
+        template:
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: curl
+                image: curlimages/curl:8.7.1
+                command:
+                  - sh
+                  - -c
+                  - |
+                    project_id=$(curl -sk -u admin:${HARBOR_ADMIN_PASSWORD} "https://{{ harbor_domain }}/api/v2.0/projects?name={{ project.name }}" | grep -o 'project_id\":[0-9]*' | head -1 | cut -d: -f2)
+                    echo "Project ID: $project_id"
+                    payload='''{{ lookup('template', 'roles/harbor/templates/retention_payload.json.j2') }}'''
+                    payload=$(echo "$payload" | sed "s/PROJECT_ID_PLACEHOLDER/$project_id/")
+                    echo "--- Retention policy payload ---"
+                    echo "$payload"
+                    echo "--- /Retention policy payload ---"
+                    echo "$payload" > /tmp/payload.json
+                    response=$(curl -sk \
+                      -u admin:${HARBOR_ADMIN_PASSWORD} \
+                      -X POST "https://{{ harbor_domain }}/api/v2.0/retentions" \
+                      -H "Content-Type: application/json" \
+                      -d @/tmp/payload.json \
+                      -w "\nHTTP_STATUS:%{http_code}\n"
+                    )
+                    echo "$response"
+                env:
+                  - name: HARBOR_ADMIN_PASSWORD
+                    value: "{{ harbor_admin_password }}"

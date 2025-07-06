@@ -1,7 +1,7 @@
 harbor_version: "1.16.4"                # Set to your desired Harbor chart version
 
 harbor_storage_class: "longhorn-single-replica"        # Set to your cluster's storage class
-harbor_registry_size: "6Gi"
+harbor_registry_size: "10Gi"
 harbor_database_size: "200Mi"
 harbor_redis_size: "100Mi"
 harbor_trivy_size: "200Mi"

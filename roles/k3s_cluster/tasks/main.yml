@@ -16,6 +16,23 @@
   ansible.builtin.set_fact:
     token: "{{ k3s_token }}"
 
+# Ensure inotify max_user_watches is set
+- name: Ensure inotify max_user_watches is set
+  ansible.posix.sysctl:
+    name: fs.inotify.max_user_watches
+    value: '524288'
+    state: present
+    reload: true
+  when: "'k3s_cluster' in group_names"
+
+- name: Ensure inotify max_user_instances is set
+  ansible.posix.sysctl:
+    name: fs.inotify.max_user_instances
+    value: '8192'
+    state: present
+    reload: true
+  when: "'k3s_cluster' in group_names"
+
 # Common prerequisites for all k3s_cluster hosts
 - name: Run prereq role on all k3s_cluster hosts
   ansible.builtin.include_role:
@@ -40,6 +57,8 @@
   ansible.builtin.set_fact:
     k3s_kubeconfig_path: "{{ k3s_local_kubeconfig }}"
   when: "'server' in group_names"
+
+
 
 # Setup agent nodes
 - name: Ensure k3s-agent.service.env exists
