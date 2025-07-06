@@ -5,5 +5,5 @@ harbor_registry_size: "10Gi"
 harbor_database_size: "200Mi"
 harbor_redis_size: "100Mi"
 harbor_trivy_size: "200Mi"
-harbor_jobservice_size: "100Mi"
+harbor_jobservice_size: "1Gi"
 

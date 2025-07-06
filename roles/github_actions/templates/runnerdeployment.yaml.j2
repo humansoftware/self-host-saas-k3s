@@ -21,8 +21,11 @@ spec:
             - name: harbor-ca
               mountPath: /etc/docker/certs.d/{{harbor_domain}}/ca.crt
               subPath: ca.crt
+        - name: runner
+          image: summerwind/actions-runner:latest
+          volumeMounts:
             - name: harbor-ca
-              mountPath: /etc/docker/certs.d/{{harbor_domain}}:443/ca.crt
+              mountPath: /etc/buildkit/certs/{{harbor_domain}}/ca.crt
               subPath: ca.crt
       volumes:
         - name: harbor-ca
