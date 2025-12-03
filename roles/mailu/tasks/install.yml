@@ -24,7 +24,7 @@
           - hosts:
               - mailu.{{ mailu_main_domain }}Add commentMore actions
             secretName: mailu-certificates
-        tlsFlavorOverride: "notls"
+        tlsFlavorOverride: "cert"
       admin:
         enabled: true
       initialAccount:
@@ -49,6 +49,11 @@
           size: "{{ mailu_clamav_size }}"
       webmail:
         enabled: true
+      global:
+        database:
+          roundcube:
+            password: "{{ mailu_roundcube_password }}"
+      secretKey: "{{ mailu_secret_key }}"
       front:
         hostPort:
           enabled: false
@@ -58,11 +63,17 @@
           externalTrafficPolicy: Local
           annotations:
             traefik.ingress.kubernetes.io/service.serversscheme: "http"
+          nodePorts:
+            imaps: 993
           ports:
-            imaps: "{{ enable_mailu_imap_public_access | default(false) }}"
+            imaps: true
         extraEnvVars:
           - name: WEBMAIL_ADDRESS
             value: "mailu-webmail.mailu.svc.cluster.local:80"
+          - name: PROXY_PROTOCOL
+            value: "mail"
+          - name: REAL_IP_FROM
+            value: "10.42.0.0/16"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
   when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0

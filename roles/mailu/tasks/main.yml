@@ -40,3 +40,4 @@
   loop_control:
     loop_var: item
   when: item.mailu.enabled | default(false)
+

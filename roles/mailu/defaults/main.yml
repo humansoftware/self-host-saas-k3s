@@ -7,3 +7,5 @@ mailu_storage_class: longhorn-single-replica
 mailu_enable_clamav: false
 mailu_enable_oletools: false
 mailu_enable_tika: false
+mailu_roundcube_password: "someStrongPassword"
+mailu_secret_key: "someSecretKey"
