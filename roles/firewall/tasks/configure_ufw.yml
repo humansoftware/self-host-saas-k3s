@@ -37,7 +37,15 @@
     rule: allow
     port: 993
     proto: tcp
+
   when: enable_mailu_imap_public_access | default(false)
+
+- name: Allow POP3S (995) in UFW
+  community.general.ufw:
+    rule: allow
+    port: 995
+    proto: tcp
+  when: enable_mailu_pop3_public_access | default(false)
 
 - name: Enable UFW
   community.general.ufw:
