@@ -70,10 +70,6 @@
         extraEnvVars:
           - name: WEBMAIL_ADDRESS
             value: "mailu-webmail.mailu.svc.cluster.local:80"
-          - name: PROXY_PROTOCOL
-            value: "mail"
-          - name: REAL_IP_FROM
-            value: "10.42.0.0/16"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
   when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
