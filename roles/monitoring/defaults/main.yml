@@ -12,3 +12,16 @@ grafana_storage_size: 200Mi
 grafana_storage_class: longhorn
 grafana_admin_user: admin
 grafana_admin_password: admin
+# Grafana sidecar configuration (for loading dashboards from ConfigMaps)
+grafana_sidecar_enabled: true
+grafana_sidecar_label: grafana_dashboard
+grafana_sidecar_search_namespace: ALL
+
+# kube-prometheus-stack (Prometheus Operator) settings
+# Use this role to install the kube-prometheus-stack chart instead
+# of the standalone prometheus chart. When enabled the role will
+# install the operator + stack and create CRDs (requires cluster-admin).
+# Helm release name to use for kube-prometheus-stack
+kube_prometheus_release_name: kube-prom-stack
+# Chart reference for the operator stack
+kube_prometheus_chart_ref: prometheus-community/kube-prometheus-stack

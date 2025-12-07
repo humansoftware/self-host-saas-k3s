@@ -7,6 +7,3 @@
 
 - name: Install Prometheus
   ansible.builtin.include_tasks: install_prometheus.yml
-
-- name: Install Grafana
-  ansible.builtin.include_tasks: install_grafana.yml

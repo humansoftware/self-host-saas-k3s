@@ -1,3 +1,7 @@
+---
+# Cluster name used as Prometheus external label so dashboards that filter by
+# `cluster` receive a value. Override this per-environment if needed.
+prometheus_cluster_name: "self-host-saas-k3s"
 # Variables to be defined before running the playbook
 host_public_ip: "{{ lookup('env', 'HOST_PUBLIC_IP') }}"
 

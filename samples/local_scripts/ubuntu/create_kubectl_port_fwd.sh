@@ -14,13 +14,26 @@ else
     echo "SSH tunnel created. You can now use kubectl to connect to the cluster."
 fi
 
-# Forward Grafana UI
-kubectl -n monitoring port-forward svc/grafana 3000:80 &
-echo "Grafana: http://localhost:3000 (admin/admin or your custom credentials)"
+# Defaults: release name for kube-prometheus-stack (override with env var)
+PROM_RELEASE="${PROM_RELEASE:-kube-prom-stack}"
 
-# Forward Prometheus UI
-kubectl -n monitoring port-forward svc/prometheus-server 9090:80 &
-echo "Prometheus: http://localhost:9090"
+# Forward Grafana UI (service name from kube-prometheus-stack)
+GRAFANA_SVC="${PROM_RELEASE}-grafana"
+if kubectl -n monitoring get svc "${GRAFANA_SVC}" >/dev/null 2>&1; then
+    kubectl -n monitoring port-forward svc/${GRAFANA_SVC} 3000:80 &
+    echo "Grafana: http://localhost:3000 (admin/admin or your custom credentials)"
+else
+    echo "Warning: service ${GRAFANA_SVC} not found in namespace monitoring; skipping Grafana port-forward"
+fi
+
+# Forward Prometheus UI (service name from kube-prometheus-stack)
+PROM_SVC="${PROM_RELEASE}-kube-prome-prometheus"
+if kubectl -n monitoring get svc "${PROM_SVC}" >/dev/null 2>&1; then
+    kubectl -n monitoring port-forward svc/${PROM_SVC} 9090:9090 &
+    echo "Prometheus: http://localhost:9090"
+else
+    echo "Warning: service ${PROM_SVC} not found in namespace monitoring; skipping Prometheus port-forward"
+fi
 
 # Forward Longhorn UI
 kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80 &

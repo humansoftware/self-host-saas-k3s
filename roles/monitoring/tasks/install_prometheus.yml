@@ -1,22 +1,52 @@
-- name: Install Prometheus using Helm
+---
+# Install kube-prometheus-stack (Prometheus Operator) using Helm
+- name: Install kube-prometheus-stack (Prometheus Operator) using Helm
   when: prometheus_enabled
   kubernetes.core.helm:
-    name: prometheus
-    chart_ref: prometheus-community/prometheus
+    name: "{{ kube_prometheus_release_name }}"
+    chart_ref: "{{ kube_prometheus_chart_ref }}"
     release_namespace: "{{ monitoring_namespace }}"
     create_namespace: false
     values:
+      # Configure embedded Grafana in the kube-prometheus-stack using role variables
+      grafana:
+        enabled: "{{ grafana_enabled | default(false) | bool }}"
+        persistence:
+          enabled: true
+          storageClassName: "{{ grafana_storage_class }}"
+          accessModes: ["ReadWriteOnce"]
+          size: "{{ grafana_storage_size }}"
+        adminUser: "{{ grafana_admin_user }}"
+        adminPassword: "{{ grafana_admin_password }}"
+        sidecar:
+          dashboards:
+            enabled: "{{ grafana_sidecar_enabled | default(false) | bool }}"
+            label: "{{ grafana_sidecar_label }}"
+            searchNamespace: "{{ grafana_sidecar_search_namespace }}"
+        # Note: grafana datasource provisioning is handled by a separate
+        # Kubernetes ConfigMap task below to avoid Helm template type errors.
+      prometheusOperator:
+        # ensure CRDs are created by the chart
+        createCustomResource: true
       prometheus:
-        storageSpec:
-          volumeClaimTemplate:
-            spec:
-              storageClassName: "{{ prometheus_storage_class }}"
-              accessModes: ["ReadWriteOnce"]
-              resources:
-                requests:
-                  storage: "{{ prometheus_storage_size }}"
+        prometheusSpec:
+          # Add a cluster external label so dashboards that filter by 'cluster' work
+          externalLabels:
+            cluster: "{{ prometheus_cluster_name | default('self-host-saas-k3s') }}"
+          # Ensure each scraped target receives a 'cluster' label so metrics include it
+          relabelConfigs:
+            - targetLabel: cluster
+              replacement: "{{ prometheus_cluster_name | default('self-host-saas-k3s') }}"
+          storageSpec:
+            volumeClaimTemplate:
+              spec:
+                storageClassName: "{{ prometheus_storage_class }}"
+                accessModes: ["ReadWriteOnce"]
+                resources:
+                  requests:
+                    storage: "{{ prometheus_storage_size }}"
       alertmanager:
-        enabled: "{{ prometheus_alertmanager_enabled }}"
+        enabled: "{{ prometheus_alertmanager_enabled | default(true) | bool }}"
         alertmanagerSpec:
           storage:
             volumeClaimTemplate:
@@ -28,3 +58,32 @@
                     storage: "{{ prometheus_alertmanager_storage_size }}"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
+
+- name: Ensure Grafana 'default' datasource exists as a ConfigMap
+  when: prometheus_enabled and grafana_sidecar_enabled
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: "grafana-datasource-default"
+        namespace: "{{ monitoring_namespace }}"
+        labels:
+          grafana_datasource: "1"
+      data:
+        datasource.yaml: |-
+          apiVersion: 1
+          datasources:
+          - name: "Prometheus"
+            type: prometheus
+            uid: prometheus
+            url: http://{{ kube_prometheus_release_name }}-kube-prome-prometheus.{{ monitoring_namespace }}:9090/
+            access: proxy
+            isDefault: true
+          - name: "default"
+            type: prometheus
+            uid: default
+            url: http://{{ kube_prometheus_release_name }}-kube-prome-prometheus.{{ monitoring_namespace }}:9090/
+            access: proxy
+            isDefault: false
