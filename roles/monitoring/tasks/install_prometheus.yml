@@ -81,6 +81,8 @@
           # Add a cluster external label so dashboards that filter by 'cluster' work
           externalLabels:
             cluster: "{{ prometheus_cluster_name | default('self-host-saas-k3s') }}"
+          # External URL for Prometheus web UI. Set to localhost for local port-forwarding.
+          externalUrl: "http://localhost:9090/"
           # Ensure each scraped target receives a 'cluster' label so metrics include it
           relabelConfigs:
             - targetLabel: cluster
@@ -111,6 +113,8 @@
                 resources:
                   requests:
                     storage: "{{ prometheus_alertmanager_storage_size }}"
+          # External URL for Alertmanager web UI. Set to localhost for local port-forwarding.
+          externalUrl: "http://localhost:9093/"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
 

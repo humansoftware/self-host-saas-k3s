@@ -35,6 +35,15 @@ else
     echo "Warning: service ${PROM_SVC} not found in namespace monitoring; skipping Prometheus port-forward"
 fi
 
+# Forward Alertmanager UI (service name from kube-prometheus-stack)
+AM_SVC="${PROM_RELEASE}-kube-prome-alertmanager"
+if kubectl -n monitoring get svc "${AM_SVC}" >/dev/null 2>&1; then
+    kubectl -n monitoring port-forward svc/${AM_SVC} 9093:9093 &
+    echo "Alertmanager: http://localhost:9093"
+else
+    echo "Warning: service ${AM_SVC} not found in namespace monitoring; skipping Alertmanager port-forward"
+fi
+
 # Forward Longhorn UI
 kubectl -n longhorn-system port-forward svc/longhorn-frontend 8080:80 &
 echo "Longhorn: http://localhost:8080"
