@@ -1,0 +1,4 @@
+---
+# Default variables for roles/argocd
+# Pin the chart version for reproducible installs. Change as needed.
+argocd_image_updater_chart_version: "0.12.3"

@@ -2,13 +2,13 @@
 monitoring_namespace: monitoring
 
 prometheus_enabled: true
-prometheus_storage_size: 200Mi
+prometheus_storage_size: 10Gi
 prometheus_storage_class: longhorn
 prometheus_alertmanager_enabled: true
-prometheus_alertmanager_storage_size: 100Mi
+prometheus_alertmanager_storage_size: 1Gi
 
 grafana_enabled: true
-grafana_storage_size: 200Mi
+grafana_storage_size: 1Gi
 grafana_storage_class: longhorn
 grafana_admin_user: admin
 grafana_admin_password: admin
@@ -25,3 +25,8 @@ grafana_sidecar_search_namespace: ALL
 kube_prometheus_release_name: kube-prom-stack
 # Chart reference for the operator stack
 kube_prometheus_chart_ref: prometheus-community/kube-prometheus-stack
+
+# Explicit Prometheus ServiceAccount name we will assign in Helm values so
+# we can bind RBAC RoleBindings reliably across namespaces.
+# This keeps names deterministic for RoleBinding subjects.
+kube_prometheus_prometheus_sa_name: "{{ kube_prometheus_release_name }}-prometheus"

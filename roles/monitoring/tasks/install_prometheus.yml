@@ -1,5 +1,43 @@
 ---
-# Install kube-prometheus-stack (Prometheus Operator) using Helm
+- name: Label project namespaces for monitoring
+  when: prometheus_enabled
+  kubernetes.core.k8s:
+    state: present
+    api_version: v1
+    kind: Namespace
+    name: "{{ item.name }}"
+    definition:
+      metadata:
+        labels:
+          monitoring: "{{ item.monitoring | default('enabled') | string }}"
+  loop: "{{ self_saas_projects }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Label Prometheus release namespace for monitoring
+  when: prometheus_enabled
+  kubernetes.core.k8s:
+    state: present
+    api_version: v1
+    kind: Namespace
+    name: "{{ monitoring_namespace }}"
+    definition:
+      metadata:
+        labels:
+          monitoring: "enabled"
+
+- name: Ensure `kube-system` namespace is monitored
+  when: prometheus_enabled
+  kubernetes.core.k8s:
+    state: present
+    api_version: v1
+    kind: Namespace
+    name: kube-system
+    definition:
+      metadata:
+        labels:
+          monitoring: "enabled"
+
 - name: Install kube-prometheus-stack (Prometheus Operator) using Helm
   when: prometheus_enabled
   kubernetes.core.helm:
@@ -28,7 +66,17 @@
       prometheusOperator:
         # ensure CRDs are created by the chart
         createCustomResource: true
+        # Limit operator's interaction to the release namespace and project namespaces
+        # so the operator will watch/manage ServiceMonitor/PrometheusRule CRs in those
+        # namespaces. `additional` is populated from `self_saas_projects` names.
+        namespaces:
+          releaseNamespace: true
+          additional: "{{ self_saas_projects | map(attribute='name') | list }}"
       prometheus:
+        # Ensure a deterministic ServiceAccount name so RoleBindings can reference it
+        serviceAccount:
+          create: true
+          name: "{{ kube_prometheus_prometheus_sa_name }}"
         prometheusSpec:
           # Add a cluster external label so dashboards that filter by 'cluster' work
           externalLabels:
@@ -45,6 +93,13 @@
                 resources:
                   requests:
                     storage: "{{ prometheus_storage_size }}"
+          # Allow configuring which namespaces Prometheus will search for ServiceMonitors
+          # Use a label-based namespace selector so the Prometheus CR is valid.
+          # We label target namespaces with `monitoring=enabled` in the
+          # `setup_namespace_monitoring_rbac.yml` task above and select by that label.
+          serviceMonitorNamespaceSelector:
+            matchLabels:
+              monitoring: "enabled"
       alertmanager:
         enabled: "{{ prometheus_alertmanager_enabled | default(true) | bool }}"
         alertmanagerSpec:
@@ -58,6 +113,51 @@
                     storage: "{{ prometheus_alertmanager_storage_size }}"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
+
+- name: Create per-namespace RBAC for Prometheus discovery
+  when: prometheus_enabled
+  block:
+    - name: Create Role for Prometheus discovery in project namespaces
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: Role
+          metadata:
+            name: prometheus-discovery
+            namespace: "{{ item.name }}"
+          rules:
+            - apiGroups: [""]
+              resources:
+                ["services", "endpoints", "pods", "secrets", "configmaps"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: ["monitoring.coreos.com"]
+              resources: ["servicemonitors", "podmonitors"]
+              verbs: ["get", "list", "watch"]
+      loop: "{{ self_saas_projects }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create RoleBinding in project namespaces to bind Prometheus ServiceAccount
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: RoleBinding
+          metadata:
+            name: prometheus-discovery-binding
+            namespace: "{{ item.name }}"
+          subjects:
+            - kind: ServiceAccount
+              name: "{{ kube_prometheus_prometheus_sa_name }}"
+              namespace: "{{ monitoring_namespace }}"
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: Role
+            name: prometheus-discovery
+      loop: "{{ self_saas_projects }}"
+      loop_control:
+        label: "{{ item.name }}"
 
 - name: Ensure Grafana 'default' datasource exists as a ConfigMap
   when: prometheus_enabled and grafana_sidecar_enabled

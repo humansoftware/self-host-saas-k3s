@@ -85,6 +85,7 @@
   kubernetes.core.helm:
     name: argocd-image-updater
     chart_ref: argo/argocd-image-updater
+    chart_version: "{{ argocd_image_updater_chart_version }}"
     release_namespace: argocd
     create_namespace: true
     state: present

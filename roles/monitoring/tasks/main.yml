@@ -4,6 +4,6 @@
 
 - name: Add monitoring Helm repos
   ansible.builtin.include_tasks: add_helm_repos.yml
-
+  
 - name: Install Prometheus
   ansible.builtin.include_tasks: install_prometheus.yml
