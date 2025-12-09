@@ -1,0 +1,11 @@
+[OUTPUT]
+    Name    loki
+    Match   *
+    Host    {{ loki_hostname }}
+    Port    {{ loki_service_port }}
+    tenant_id fluent-bit
+
+    Labels  agent=fluent-bit
+    # Include all Kubernetes pod labels as stream labels (On/Off).
+    # WARNING: enabling this may increase label cardinality and storage cost.
+    auto_kubernetes_labels On

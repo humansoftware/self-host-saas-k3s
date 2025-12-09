@@ -23,6 +23,8 @@
               type: "filesystem"
               # explicitly disable thanos/object-store usage for safety
               use_thanos_objstore: false
+            # Enable volume handling for TSDB (required for local filesystem storage)
+            volume_enabled: true
             # Use a TSDB schema suitable for filesystem-backed SingleBinary
             schemaConfig:
               configs:
@@ -33,6 +35,11 @@
                   index:
                     prefix: index_
                     period: 24h
+            # Enable volume metrics reporting in Loki limits (required by Grafana log volume UI)
+            limits_config:
+              volume_enabled: true
+            commonConfig:
+              replication_factor: "{{ loki_replication_factor }}"
           # defensive top-level object_store setting to avoid defaulting to s3
           object_store:
             type: filesystem
@@ -45,6 +52,20 @@
             replicas: 0
           # ensure minio subchart is explicitly disabled
           minio:
+            enabled: false
+          # Disable auxiliary Loki components when running in SingleBinary mode
+          # on single-node clusters to avoid ring/ingester membership complexity.
+          gateway:
+            enabled: false
+          chunksCache:
+            enabled: false
+          resultsCache:
+            enabled: false
+          canary:
+            enabled: false
+          compactor:
+            enabled: false
+          querier:
             enabled: false
           singleBinary:
             persistence:
@@ -62,30 +83,25 @@
          if (fluentbit_namespace_whitelist | length) > 0
          else (self_saas_projects | map(attribute='name') | list | join('|')) }}
 
-- name: Ensure Fluent Bit filter ConfigMap exists
+- name: Render Fluent Bit outputs template
   when: loki_enabled and fluentbit_enabled
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: "{{ loki_release_name }}-fluentbit-filters"
-        namespace: "{{ monitoring_namespace }}"
-      data:
-        filters.conf: |-
-          [FILTER]
-              Name                kubernetes
-              Match               kube.*
-              Merge_Log           On
-              K8S-Logging.Parser  On
-              K8S-Logging.Exclude Off
-          {% if fluentbit_namespace_regex is defined and fluentbit_namespace_regex != '' %}
-          [FILTER]
-              Name   grep
-              Match  kube.*
-              Regex  kubernetes['namespace_name']  ^({{ fluentbit_namespace_regex }})$
-          {% endif %}
+  ansible.builtin.set_fact:
+    fluentbit_outputs: "{{ lookup('template', 'fluent-bit-outputs.conf.j2') }}"
+
+- name: Render Fluent Bit filters template
+  when: loki_enabled and fluentbit_enabled
+  ansible.builtin.set_fact:
+    fluentbit_filters: "{{ lookup('template', 'fluent-bit-filters.conf.j2') }}"
+
+- name: Render Fluent Bit parsers template
+  when: loki_enabled and fluentbit_enabled
+  ansible.builtin.set_fact:
+    fluentbit_parsers: "{{ lookup('template', 'fluent-bit-parsers.conf.j2') }}"
+
+- name: Render Fluent Bit inputs template
+  when: loki_enabled and fluentbit_enabled
+  ansible.builtin.set_fact:
+    fluentbit_inputs: "{{ lookup('template', 'fluent-bit-inputs.conf.j2') }}"
 
 - name: Install Fluent Bit (DaemonSet) to forward logs to Loki
   when: loki_enabled and fluentbit_enabled
@@ -102,20 +118,12 @@
         create: true
       serviceAccount:
         create: true
-      backend:
-        enabled: true
-        name: loki
-        loki:
-          enabled: true
-          url: "{{ fluentbit_loki_url }}"
-      extraVolumes:
-        - name: fluentbit-filters
-          configMap:
-            name: "{{ loki_release_name }}-fluentbit-filters"
-      extraVolumeMounts:
-        - name: fluentbit-filters
-          mountPath: /fluent-bit/etc/filters.conf
-          subPath: filters.conf
-          readOnly: true
+      # We render output/filters from role templates to make the config
+      # easier to maintain and less error-prone.
+      config:
+        outputs: "{{ fluentbit_outputs }}"
+        filters: "{{ fluentbit_filters }}"
+        inputs: "{{ fluentbit_inputs }}"
+        customParsers: "{{ fluentbit_parsers }}"
     wait: true
     wait_timeout: "{{ helm_install_timeout | default('300') }}"

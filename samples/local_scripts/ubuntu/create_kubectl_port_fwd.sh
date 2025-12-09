@@ -16,6 +16,8 @@ fi
 
 # Defaults: release name for kube-prometheus-stack (override with env var)
 PROM_RELEASE="${PROM_RELEASE:-kube-prom-stack}"
+# Defaults: release name for loki (override with env var)
+LOKI_RELEASE="${LOKI_RELEASE:-loki}"
 
 # Forward Grafana UI (service name from kube-prometheus-stack)
 GRAFANA_SVC="${PROM_RELEASE}-grafana"
@@ -33,6 +35,14 @@ if kubectl -n monitoring get svc "${PROM_SVC}" >/dev/null 2>&1; then
     echo "Prometheus: http://localhost:9090"
 else
     echo "Warning: service ${PROM_SVC} not found in namespace monitoring; skipping Prometheus port-forward"
+fi
+
+# Forward Loki (ingest/query API)
+if kubectl -n monitoring get svc "loki" >/dev/null 2>&1; then
+    kubectl -n monitoring port-forward svc/loki 3100:3100 &
+    echo "Loki: http://localhost:3100/ready (service: loki)"
+else
+    echo "Warning: service lokinot found in namespace monitoring; skipping Loki port-forward"
 fi
 
 # Forward Alertmanager UI (service name from kube-prometheus-stack)

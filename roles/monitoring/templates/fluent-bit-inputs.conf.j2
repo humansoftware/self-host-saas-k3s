@@ -1,0 +1,24 @@
+## Fluent Bit inputs template
+## This template defines the inputs Fluent Bit should use on each node.
+## - A `tail` input that reads container logs from the host (captures pod logs)
+##   and uses the built-in `python` multiline parser to collect Python
+##   tracebacks. We do not set an input-level `Parser` here so parsing of the
+##   `log` field can be applied safely via a filter (preserve raw data on
+##   failure).
+## - A `systemd` input limited to kubelet logs for node-level diagnostics.
+
+[INPUT]
+    Name        tail
+    Path        /var/log/containers/*.log
+    Tag         kube.*
+    # Use built-in python multiline parser to combine Python tracebacks
+    multiline.parser python
+    Mem_Buf_Limit 25MB
+    Skip_Long_Lines On
+    DB          /var/log/flb_kube.db
+
+[INPUT]
+    Name        systemd
+    Tag         host.*
+    Systemd_Filter _SYSTEMD_UNIT=kubelet.service
+    Read_From_Tail On

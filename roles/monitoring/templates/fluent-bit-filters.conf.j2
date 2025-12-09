@@ -1,0 +1,15 @@
+[FILTER]
+    Name kubernetes
+    Match kube.*
+    Merge_Log On
+    Keep_Log Off
+    K8S-Logging.Parser On
+    K8S-Logging.Exclude On
+
+[FILTER]
+    Name        parser
+    Match       kube.*
+    Key_Name    log
+    Parser      python_basic_time
+    Preserve_Key On
+    Reserve_Data On

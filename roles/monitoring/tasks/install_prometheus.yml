@@ -199,4 +199,8 @@
             url: "{{ loki_service_url }}"
             access: proxy
             isDefault: false
+            jsonData:
+              httpHeaderName1: "X-Scope-OrgID"
+            secureJsonData:
+              httpHeaderValue1: "fluent-bit"
           {% endif %}

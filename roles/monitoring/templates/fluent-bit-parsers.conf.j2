@@ -1,0 +1,23 @@
+## Parsers for Fluent Bit
+## Keep the JSON/docker parser and add a parser for Python's
+## logging.basicConfig("%(asctime)s - %(levelname)s - %(message)s") format.
+
+[PARSER]
+    Name        docker_no_time
+    Format      json
+    Time_Keep   Off
+    Time_Key    time
+    Time_Format %Y-%m-%dT%H:%M:%S.%L
+
+
+[PARSER]
+    Name        python_basic_time
+    Format      regex
+    # Example log line: 2025-12-09 17:29:08,254 - INFO - Fetching ...
+    Regex       ^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) - (?<level>[A-Z]+) - (?<message>.*)$
+    Time_Key    time
+    Time_Format %Y-%m-%d %H:%M:%S,%L
+    Time_Keep   Off
+
+# You can add more parsers here if needed. This template is rendered
+# into the Fluent Bit Helm chart via the role's `install_loki.yml` task.

@@ -49,7 +49,10 @@ fluentbit_enabled: true
 fluentbit_chart_ref: fluent/fluent-bit
 fluentbit_chart_version: "0.54.0"
 # Optional whitelist of namespaces to collect logs from (empty = all)
-fluentbit_namespace_whitelist: []
+# Optional whitelist of namespaces to collect logs from (empty = all)
+# For troubleshooting we can temporarily set this to ['.*'] to allow all
+# namespaces through the GREP filter. Revert after debugging.
+fluentbit_namespace_whitelist: ['.*']
 # URL Fluent Bit should push logs to (Loki HTTP push endpoint)
 fluentbit_loki_url: "{{ loki_service_url }}/loki/api/v1/push"
 # Persistence defaults for Loki
@@ -57,4 +60,10 @@ loki_persistence_enabled: true
 loki_persistence_size: 20Gi
 loki_persistence_storage_class: longhorn
 # Full URL Grafana should use to reach Loki (defaults to release service in monitoring ns)
-loki_service_url: "http://{{ loki_release_name }}-loki.{{ monitoring_namespace }}:3100"
+loki_hostname: "{{ loki_release_name }}.{{ monitoring_namespace }}.svc.cluster.local"
+loki_service_port: 3100
+loki_service_url: "http://{{loki_hostname}}:{{ loki_service_port }}"
+
+# Replication factor for Loki ring/ingesters. Set to 1 for single-node clusters
+# to avoid errors like "at least 2 live replicas required, could only find 1".
+loki_replication_factor: 1
