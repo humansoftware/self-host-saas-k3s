@@ -13,7 +13,7 @@
           spec:
             containers:
               - name: cqlsh
-                image: bitnami/cassandra:latest
+                image: "bitnami/cassandra:{{ cassandra_image_version }}"
                 command: ["/bin/bash", "-c"]
                 args:
                   - |
