@@ -2,6 +2,11 @@
   ansible.builtin.set_fact:
     postgres_databases: "{{ self_saas_projects | map(attribute='name') | list }}"
 
+- name: Add Bitnami Helm repository (non-OCI fallback)
+  kubernetes.core.helm_repository:
+    name: bitnami
+    repo_url: https://charts.bitnami.com/bitnami
+
 - name: Install Bitnami Postgres via Helm
   kubernetes.core.helm:
     name: "{{ postgres_release_name }}"

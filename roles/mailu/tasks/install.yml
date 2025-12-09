@@ -2,6 +2,7 @@
   kubernetes.core.helm:
     name: "mailu"
     chart_ref: mailu/mailu
+    chart_version: "{{ mailu_chart_version }}"
     release_namespace: mailu
     values:
       hostnames: >-

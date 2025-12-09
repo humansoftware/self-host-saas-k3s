@@ -77,8 +77,9 @@
     namespace: "{{ postgres_namespace }}"
     name: psql-client-create-databases
   register: pod_info_db
-  until: pod_info_db.resources[0].status.phase == 'Succeeded'
-  retries: 5
-  delay: 6
+  # Use a safe until that handles the case where resources is empty
+  until: "'Succeeded' in (pod_info_db.resources | map(attribute='status.phase') | list)"
+  retries: 12
+  delay: 5
   delegate_to: localhost
   run_once: true

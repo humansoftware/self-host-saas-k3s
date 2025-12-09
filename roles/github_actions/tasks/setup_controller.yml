@@ -28,6 +28,7 @@
   kubernetes.core.helm:
     name: actions-runner-controller
     chart_ref: actions-runner-controller/actions-runner-controller
+    chart_version: "{{ actions_runner_controller_chart_version }}"
     release_namespace: actions-runner-system
     create_namespace: true
     values:

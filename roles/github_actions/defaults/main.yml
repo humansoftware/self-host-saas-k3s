@@ -1,2 +1,5 @@
 # Default number of GitHub Actions runners per project
 github_actions_runner_replicas_default: 1
+
+# Pin actions-runner-controller Helm chart to the latest available on or before 2025-07-31
+actions_runner_controller_chart_version: "0.23.7"

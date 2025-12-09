@@ -1,11 +1,11 @@
 ---
 # defaults file for postgres
 postgres_namespace: postgres
-postgres_chart: oci://registry-1.docker.io/bitnamicharts/postgresql
+postgres_chart: bitnami/postgresql
 postgres_release_name: postgres
 postgres_chart_version: "16.3.0"
 postgres_storage_class: longhorn-single-replica
 postgres_admin_password: "changeme"
 postgres_storage_size: 8Gi
-postgres_client_pod_image_tag: "16.3.0-debian-12-r0"
+postgres_client_pod_image_tag: "17.2.0-debian-12-r2"
 install_postgres: false
