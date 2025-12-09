@@ -1,0 +1,121 @@
+---
+- name: Install Loki using Helm
+  when: loki_enabled
+  block:
+    - name: Ensure monitoring namespace exists for Loki
+      kubernetes.core.k8s:
+        state: present
+        api_version: v1
+        kind: Namespace
+        name: "{{ monitoring_namespace }}"
+    - name: Install grafana/loki chart
+      kubernetes.core.helm:
+        name: "{{ loki_release_name }}"
+        chart_ref: "{{ loki_chart_ref }}"
+        chart_version: "{{ loki_chart_version }}"
+        release_namespace: "{{ monitoring_namespace }}"
+        create_namespace: false
+        values:
+          deploymentMode: "SingleBinary"
+          # ensure Loki uses local filesystem storage for SingleBinary (no object store)
+          loki:
+            storage:
+              type: "filesystem"
+              # explicitly disable thanos/object-store usage for safety
+              use_thanos_objstore: false
+            # Use a TSDB schema suitable for filesystem-backed SingleBinary
+            schemaConfig:
+              configs:
+                - from: 2024-04-01
+                  store: tsdb
+                  object_store: filesystem
+                  schema: v13
+                  index:
+                    prefix: index_
+                    period: 24h
+          # defensive top-level object_store setting to avoid defaulting to s3
+          object_store:
+            type: filesystem
+          # ensure scalable/simple-scalable targets are disabled (replicas=0)
+          write:
+            replicas: 0
+          read:
+            replicas: 0
+          backend:
+            replicas: 0
+          # ensure minio subchart is explicitly disabled
+          minio:
+            enabled: false
+          singleBinary:
+            persistence:
+              enabled: "{{ loki_persistence_enabled | default(true) | bool }}"
+              size: "{{ loki_persistence_size }}"
+              storageClass: "{{ loki_persistence_storage_class }}"
+        wait: true
+        wait_timeout: "{{ helm_install_timeout | default('300') }}"
+
+- name: Build Fluent Bit namespace regex from whitelist or project list
+  when: loki_enabled and fluentbit_enabled
+  ansible.builtin.set_fact:
+    fluentbit_namespace_regex: >-
+      {{ (fluentbit_namespace_whitelist | join('|'))
+         if (fluentbit_namespace_whitelist | length) > 0
+         else (self_saas_projects | map(attribute='name') | list | join('|')) }}
+
+- name: Ensure Fluent Bit filter ConfigMap exists
+  when: loki_enabled and fluentbit_enabled
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: "{{ loki_release_name }}-fluentbit-filters"
+        namespace: "{{ monitoring_namespace }}"
+      data:
+        filters.conf: |-
+          [FILTER]
+              Name                kubernetes
+              Match               kube.*
+              Merge_Log           On
+              K8S-Logging.Parser  On
+              K8S-Logging.Exclude Off
+          {% if fluentbit_namespace_regex is defined and fluentbit_namespace_regex != '' %}
+          [FILTER]
+              Name   grep
+              Match  kube.*
+              Regex  kubernetes['namespace_name']  ^({{ fluentbit_namespace_regex }})$
+          {% endif %}
+
+- name: Install Fluent Bit (DaemonSet) to forward logs to Loki
+  when: loki_enabled and fluentbit_enabled
+  kubernetes.core.helm:
+    name: "{{ loki_release_name }}-fluentbit"
+    chart_ref: "{{ fluentbit_chart_ref }}"
+    chart_version: "{{ fluentbit_chart_version }}"
+    release_namespace: "{{ monitoring_namespace }}"
+    create_namespace: false
+    values:
+      daemonset:
+        enabled: true
+      rbac:
+        create: true
+      serviceAccount:
+        create: true
+      backend:
+        enabled: true
+        name: loki
+        loki:
+          enabled: true
+          url: "{{ fluentbit_loki_url }}"
+      extraVolumes:
+        - name: fluentbit-filters
+          configMap:
+            name: "{{ loki_release_name }}-fluentbit-filters"
+      extraVolumeMounts:
+        - name: fluentbit-filters
+          mountPath: /fluent-bit/etc/filters.conf
+          subPath: filters.conf
+          readOnly: true
+    wait: true
+    wait_timeout: "{{ helm_install_timeout | default('300') }}"

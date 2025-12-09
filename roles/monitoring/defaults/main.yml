@@ -33,3 +33,28 @@ kube_prometheus_chart_version: "80.0.0"
 # we can bind RBAC RoleBindings reliably across namespaces.
 # This keeps names deterministic for RoleBinding subjects.
 kube_prometheus_prometheus_sa_name: "{{ kube_prometheus_release_name }}-prometheus"
+
+# Loki (logs) defaults
+loki_enabled: true
+# Helm release name for loki-stack
+# Release and chart for Loki
+loki_release_name: loki
+# Use the maintained Loki chart instead of the deprecated "loki-stack"
+loki_chart_ref: grafana/loki
+# Pin Loki chart version
+loki_chart_version: "6.46.0"
+# Fluent Bit (logs) defaults
+fluentbit_enabled: true
+# Fluent Bit chart reference and pinned version
+fluentbit_chart_ref: fluent/fluent-bit
+fluentbit_chart_version: "0.54.0"
+# Optional whitelist of namespaces to collect logs from (empty = all)
+fluentbit_namespace_whitelist: []
+# URL Fluent Bit should push logs to (Loki HTTP push endpoint)
+fluentbit_loki_url: "{{ loki_service_url }}/loki/api/v1/push"
+# Persistence defaults for Loki
+loki_persistence_enabled: true
+loki_persistence_size: 20Gi
+loki_persistence_storage_class: longhorn
+# Full URL Grafana should use to reach Loki (defaults to release service in monitoring ns)
+loki_service_url: "http://{{ loki_release_name }}-loki.{{ monitoring_namespace }}:3100"

@@ -2,5 +2,22 @@
   when: prometheus_enabled
   ansible.builtin.shell: |
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
+  changed_when: false
+
+- name: Add Grafana Helm repo (for loki/grafana charts)
+  when: loki_enabled or grafana_enabled
+  ansible.builtin.shell: |
+    helm repo add grafana https://grafana.github.io/helm-charts || true
+  changed_when: false
+
+- name: Add Fluent Bit Helm repo
+  when: fluentbit_enabled
+  ansible.builtin.shell: |
+    helm repo add fluent https://fluent.github.io/helm-charts || true
+  changed_when: false
+
+- name: Update Helm repo indexes
+  when: prometheus_enabled or loki_enabled or fluentbit_enabled or grafana_enabled
+  ansible.builtin.shell: |
     helm repo update
   changed_when: false

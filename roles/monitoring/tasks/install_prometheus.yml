@@ -192,3 +192,11 @@
             url: http://{{ kube_prometheus_release_name }}-kube-prome-prometheus.{{ monitoring_namespace }}:9090/
             access: proxy
             isDefault: false
+          {% if loki_enabled and grafana_sidecar_enabled %}
+          - name: "Loki"
+            type: loki
+            uid: loki
+            url: "{{ loki_service_url }}"
+            access: proxy
+            isDefault: false
+          {% endif %}
