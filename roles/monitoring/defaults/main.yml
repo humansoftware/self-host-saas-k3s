@@ -48,11 +48,6 @@ fluentbit_enabled: true
 # Fluent Bit chart reference and pinned version
 fluentbit_chart_ref: fluent/fluent-bit
 fluentbit_chart_version: "0.54.0"
-# Optional whitelist of namespaces to collect logs from (empty = all)
-# Optional whitelist of namespaces to collect logs from (empty = all)
-# For troubleshooting we can temporarily set this to ['.*'] to allow all
-# namespaces through the GREP filter. Revert after debugging.
-fluentbit_namespace_whitelist: ['.*']
 # URL Fluent Bit should push logs to (Loki HTTP push endpoint)
 fluentbit_loki_url: "{{ loki_service_url }}/loki/api/v1/push"
 # Persistence defaults for Loki

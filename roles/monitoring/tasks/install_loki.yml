@@ -79,9 +79,7 @@
   when: loki_enabled and fluentbit_enabled
   ansible.builtin.set_fact:
     fluentbit_namespace_regex: >-
-      {{ (fluentbit_namespace_whitelist | join('|'))
-         if (fluentbit_namespace_whitelist | length) > 0
-         else (self_saas_projects | map(attribute='name') | list | join('|')) }}
+      {{ self_saas_projects | map(attribute='name') | list | join('|') }}
 
 - name: Render Fluent Bit outputs template
   when: loki_enabled and fluentbit_enabled

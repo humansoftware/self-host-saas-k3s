@@ -7,9 +7,51 @@
     K8S-Logging.Exclude On
 
 [FILTER]
+    # Only allow logs from namespaces matching the regex built from self_saas_projects
+    Name        grep
+    Match       *
+    # The kubernetes filter adds 'namespace_name' under the 'kubernetes' key.
+    # https://docs.fluentbit.io/manual/data-pipeline/filters/grep#fluent-bit.conf
+    Regex       $kubernetes['namespace_name'] {{ fluentbit_namespace_regex }} 
+
+
+# 1 Try JSON_TIME first
+[FILTER]
+    Name        parser
+    Match       kube.*
+    Key_Name    log
+    Parser      json_time
+    Preserve_Key On
+    Reserve_Data On
+    
+# 2 If JSON_TIME failed, try plain JSON (only triggers if no time field exists)
+[FILTER]
+    Name        parser
+    Match       kube.*
+    Key_Name    log
+    Parser      json
+    Preserve_Key On
+    Reserve_Data On
+    Condition   Key_does_not_exist time
+
+
+# 3 If JSON failed, try Python (only triggers if no message field exists)
+[FILTER]
     Name        parser
     Match       kube.*
     Key_Name    log
     Parser      python_basic_time
     Preserve_Key On
     Reserve_Data On
+    Condition   Key_does_not_exist message
+    
+
+# 4 If Python also failed, fallback to plain text parser
+[FILTER]
+    Name        parser
+    Match       kube.*
+    Key_Name    log
+    Parser      text
+    Preserve_Key On
+    Reserve_Data On
+    Condition   Key_does_not_exist message
