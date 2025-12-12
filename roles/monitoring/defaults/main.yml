@@ -62,3 +62,16 @@ loki_service_url: "http://{{loki_hostname}}:{{ loki_service_port }}"
 # Replication factor for Loki ring/ingesters. Set to 1 for single-node clusters
 # to avoid errors like "at least 2 live replicas required, could only find 1".
 loki_replication_factor: 1
+
+# Pushgateway (for short-lived job metrics push)
+pushgateway_enabled: true
+# Helm release name for Pushgateway
+pushgateway_release_name: pushgateway
+# Chart reference for Pushgateway (prometheus-community provides a chart)
+pushgateway_chart_ref: prometheus-community/prometheus-pushgateway
+# Pin a safe chart version (can be overridden in playbooks/inventory)
+pushgateway_chart_version: "3.6.0"
+# Service fullname override so we can rely on a stable DNS name
+pushgateway_service_name: "pushgateway"
+# Port Pushgateway listens on (default 9091)
+pushgateway_service_port: 9091

@@ -119,6 +119,54 @@
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
 
+- name: Gather per-project Pushgateway credentials from project secrets
+  when: prometheus_enabled and pushgateway_enabled
+  block:
+    - name: Validate Pushgateway credentials are provided for enabled projects
+      ansible.builtin.assert:
+        that:
+          - "item.pushgateway.password is defined"
+        fail_msg: "Project {{ item.name }} must define pushgateway.password in inventory when pushgateway.enabled is true."
+      loop: "{{ self_saas_projects }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: item.pushgateway is defined and (item.pushgateway.enabled | default(false) | bool)
+
+    - name: Initialize pushgateway_basic_auth_users mapping
+      ansible.builtin.set_fact:
+        pushgateway_basic_auth_users: {}
+      when: pushgateway_basic_auth_users is not defined
+
+    - name: Build pushgateway_basic_auth_users mapping from `self_saas_projects`
+      ansible.builtin.set_fact:
+        pushgateway_basic_auth_users: "{{ pushgateway_basic_auth_users | default({}) | combine({ (item.pushgateway.user | default(item.name)): item.pushgateway.password }) }}"
+      loop: "{{ self_saas_projects }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: item.pushgateway.enabled | default(false)
+
+- name: Install Pushgateway (for job metrics) using Helm
+  when: prometheus_enabled and pushgateway_enabled
+  kubernetes.core.helm:
+    name: "{{ pushgateway_release_name }}"
+    chart_ref: "{{ pushgateway_chart_ref }}"
+    chart_version: "{{ pushgateway_chart_version }}"
+    release_namespace: "{{ monitoring_namespace }}"
+    create_namespace: false
+    # Before installing Pushgateway, collect per-project credentials from created secrets
+    # and supply them to the chart via `webConfiguration.basicAuthUsers`.
+    values:
+      # Force a stable service name so we can reference it from app secrets
+      fullnameOverride: "{{ pushgateway_service_name }}"
+      service:
+        type: ClusterIP
+        port: "{{ pushgateway_service_port }}"
+      webConfiguration:
+        # populated below by a task that reads secrets; placeholder if empty
+        basicAuthUsers: "{{ pushgateway_basic_auth_users }}"
+    wait: true
+    wait_timeout: "{{ helm_install_timeout | default('300') }}"
+
 - name: Create per-namespace RBAC for Prometheus discovery
   when: prometheus_enabled
   block:
