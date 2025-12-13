@@ -10,3 +10,7 @@
 
 - name: Install Prometheus
   ansible.builtin.include_tasks: install_prometheus.yml
+
+- name: Install Pushgateway
+  ansible.builtin.include_tasks: install_pushgateway.yml
+  when: prometheus_enabled and pushgateway_enabled
