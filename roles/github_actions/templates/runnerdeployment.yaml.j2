@@ -6,6 +6,10 @@ metadata:
 spec:
   replicas: {{ item.github_actions.num_runners | default(github_actions_runner_replicas_default) }}
   template:
+    metadata:
+      annotations:
+        reloader.stakater.com/auto: "true"
+        reloader.stakater.com/rollout-strategy: "restart"
     spec:
       serviceAccountName: github-actions-runner-{{ item.name }}
       repository: {{ item.github_repo_http_url | regex_replace('^https://github.com/', '') | regex_replace('.git$', '') }}
