@@ -4,6 +4,11 @@
     name: argo
     repo_url: https://argoproj.github.io/argo-helm
 
+- name: Update Helm repositories
+  command: helm repo update
+  delegate_to: localhost
+  become: false
+
 - name: Install Argo CD via Helm
   kubernetes.core.helm:
     name: argocd
