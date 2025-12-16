@@ -72,6 +72,12 @@
         name: argocd-image-updater-harbor-credentials
         namespace: argocd
       stringData:
+      # Force a rollout when the Harbor CA secret changes by embedding
+      # the secret's resourceVersion as a pod annotation. When the
+      # secret is updated, resourceVersion changes and the deployment
+      # pod template will change, triggering a rollout.
+      podAnnotations:
+        harbor-ca-secret-revision: "{{ harbor_tls_secret.resources[0].metadata.resourceVersion }}"
         username: "{{ harbor_admin_username }}"
         password: "{{ harbor_admin_password }}"
 
