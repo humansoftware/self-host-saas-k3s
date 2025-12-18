@@ -1,14 +1,28 @@
 longhorn_namespace: longhorn-system
+longhorn_backup_target: backblaze
 backblaze_key_id: "CHANGEME"
 backblaze_application_key: "CHANGEME"
 backblaze_bucket: "CHANGEME"
 backblaze_region: "us-east-005"
 backblaze_endpoint: "https://s3.{{backblaze_region}}.backblazeb2.com"
-longhorn_helm_values:
+longhorn_helm_values_backblaze:
   defaultBackupStore:
     backupTarget: "s3://{{ backblaze_bucket }}@{{ backblaze_region }}/"
     backupTargetCredentialSecret: longhorn-backblaze-secret
     pollInterval: 180
   defaultSettings:
     backupS3Endpoint: "{{ backblaze_endpoint }}"
+    defaultClassReplicaCount: 1
+wasabi_key_id: "CHANGEME"
+wasabi_application_key: "CHANGEME"
+wasabi_bucket: "CHANGEME"
+wasabi_region: "eu-west-1"
+wasabi_endpoint: "https://s3.{{wasabi_region}}.wasabisys.com"
+longhorn_helm_values_wasabi:
+  defaultBackupStore:
+    backupTarget: "s3://{{ wasabi_bucket }}@{{ wasabi_region }}/"
+    backupTargetCredentialSecret: longhorn-wasabi-secret
+    pollInterval: 180
+  defaultSettings:
+    backupS3Endpoint: "{{ wasabi_endpoint }}"
     defaultClassReplicaCount: 1

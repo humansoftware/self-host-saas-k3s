@@ -1,0 +1,23 @@
+---
+- name: Ensure Longhorn recurring-job source label present on PVC
+  when: (pvc.metadata.labels | default({})).get('recurring-job.longhorn.io/source') != 'enabled'
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    name: "{{ pvc.metadata.name }}"
+    namespace: "{{ monitoring_namespace }}"
+    state: present
+    merge_type: strategic-merge
+    definition:
+      metadata:
+        labels:
+          recurring-job.longhorn.io/source: "enabled"
+  register: add_source_result
+  changed_when: add_source_result.changed | default(false)
+
+- name: Remove `recurring-job-group.longhorn.io/default` label from PVC (if present)
+  when: (pvc.metadata.labels | default({})).get('recurring-job-group.longhorn.io/default') is defined
+  ansible.builtin.command: >-
+    kubectl -n {{ monitoring_namespace }} label pvc {{ pvc.metadata.name }} recurring-job-group.longhorn.io/default- --overwrite
+  register: remove_group_label_result
+  changed_when: remove_group_label_result.rc == 0

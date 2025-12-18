@@ -1,0 +1,23 @@
+---
+- name: Gather PVCs in monitoring namespace
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    namespace: "{{ monitoring_namespace }}"
+  register: monitoring_pvcs
+
+- name: Label monitoring PVCs with backup=skip
+  # We now use Longhorn recurring-job labels to opt PVCs out of the cluster-wide
+  # recurring backup. Longhorn will sync PVC labels to the Volume only when the
+  # PVC is marked as a source. Therefore we:
+  # 1) ensure `recurring-job.longhorn.io/source=enabled` is present on the PVC
+  # 2) remove the recurring-job-group label that assigns the PVC to `default`
+  #    recurring job group so the global RecurringJob no longer targets it.
+  when: >-
+    (monitoring_pvcs.resources | length > 0)
+    and (label_monitoring_pvcs_skip_backup | default(true))
+  include_tasks: label_monitoring_pvc_item.yml
+  loop: "{{ monitoring_pvcs.resources }}"
+  loop_control:
+    label: "{{ pvc.metadata.name }}"
+    loop_var: pvc

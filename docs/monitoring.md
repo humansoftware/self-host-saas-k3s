@@ -12,12 +12,12 @@ monitoring_namespace: monitoring
 
 prometheus_enabled: true
 prometheus_storage_size: 5Gi
-prometheus_storage_class: longhorn
+prometheus_storage_class: longhorn-single-replica
 prometheus_alertmanager_enabled: false
 
 grafana_enabled: true
 grafana_storage_size: 5Gi
-grafana_storage_class: longhorn
+grafana_storage_class: longhorn-single-replica
 grafana_admin_user: admin
 grafana_admin_password: admin
 ```

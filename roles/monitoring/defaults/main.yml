@@ -3,13 +3,13 @@ monitoring_namespace: monitoring
 
 prometheus_enabled: true
 prometheus_storage_size: 10Gi
-prometheus_storage_class: longhorn
+prometheus_storage_class: longhorn-single-replica
 prometheus_alertmanager_enabled: true
 prometheus_alertmanager_storage_size: 1Gi
 
 grafana_enabled: true
 grafana_storage_size: 1Gi
-grafana_storage_class: longhorn
+grafana_storage_class: longhorn-single-replica
 grafana_admin_user: admin
 grafana_admin_password: admin
 # Grafana sidecar configuration (for loading dashboards from ConfigMaps)
@@ -53,7 +53,7 @@ fluentbit_loki_url: "{{ loki_service_url }}/loki/api/v1/push"
 # Persistence defaults for Loki
 loki_persistence_enabled: true
 loki_persistence_size: 20Gi
-loki_persistence_storage_class: longhorn
+loki_persistence_storage_class: longhorn-single-replica
 # Full URL Grafana should use to reach Loki (defaults to release service in monitoring ns)
 loki_hostname: "{{ loki_release_name }}.{{ monitoring_namespace }}.svc.cluster.local"
 loki_service_port: 3100
@@ -75,3 +75,9 @@ pushgateway_chart_version: "3.6.0"
 pushgateway_service_name: "pushgateway"
 # Port Pushgateway listens on (default 9091)
 pushgateway_service_port: 9091
+
+# When true, label all PersistentVolumeClaims in the monitoring namespace
+# with `backup=skip` after Helm installs. This is useful to exclude
+# monitoring volumes from cluster-level backup jobs while keeping backups
+# for other workloads intact.
+label_monitoring_pvcs_skip_backup: true

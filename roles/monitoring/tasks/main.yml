@@ -14,3 +14,7 @@
 - name: Install Pushgateway
   ansible.builtin.include_tasks: install_pushgateway.yml
   when: prometheus_enabled and pushgateway_enabled
+
+- name: Label monitoring PVCs to skip backups
+  ansible.builtin.include_tasks: label_monitoring_pvcs.yml
+  when: label_monitoring_pvcs_skip_backup | default(true)
