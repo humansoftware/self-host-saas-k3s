@@ -25,7 +25,7 @@
           - hosts:
               - mailu.{{ mailu_main_domain }}Add commentMore actions
             secretName: mailu-certificates
-        tlsFlavorOverride: "cert"
+        tlsFlavorOverride: "mail"
       admin:
         enabled: true
       initialAccount:
@@ -71,6 +71,9 @@
         extraEnvVars:
           - name: WEBMAIL_ADDRESS
             value: "mailu-webmail.mailu.svc.cluster.local:80"
+      postfix:
+        updateStrategy:
+          type: Recreate
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
   when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0

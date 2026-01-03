@@ -10,5 +10,4 @@ mailu_enable_tika: false
 mailu_roundcube_password: "someStrongPassword"
 mailu_secret_key: "someSecretKey"
 
-# Pin Mailu Helm chart to the latest available on or before 2025-07-31
-mailu_chart_version: "2.6.1"
+mailu_chart_version: "2.6.3"
