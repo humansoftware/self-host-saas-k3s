@@ -1,9 +1,4 @@
 ---
-cluster_hardening_namespaces:
-  - analisedefiis
-  - example-self-hosted-saas-app
-  - mypicscc
-  - youread
 
 cluster_hardening_psa_enforce: baseline
 cluster_hardening_psa_warn: restricted

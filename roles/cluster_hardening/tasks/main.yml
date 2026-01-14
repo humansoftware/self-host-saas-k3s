@@ -18,7 +18,7 @@
       apiVersion: v1
       kind: Namespace
       metadata:
-        name: "{{ item }}"
+        name: "{{ project.name }}"
         labels:
           pod-security.kubernetes.io/enforce: "{{ cluster_hardening_psa_enforce }}"
           pod-security.kubernetes.io/enforce-version: "latest"
@@ -26,8 +26,10 @@
           pod-security.kubernetes.io/warn-version: "latest"
           pod-security.kubernetes.io/audit: "{{ cluster_hardening_psa_audit }}"
           pod-security.kubernetes.io/audit-version: "latest"
-  loop: "{{ cluster_hardening_namespaces }}"
-  when: item in cluster_hardening_existing_namespaces
+  loop: "{{ self_saas_projects | default([]) }}"
+  when: project.name in cluster_hardening_existing_namespaces
+  loop_control:
+    loop_var: project
   delegate_to: localhost
   become: false
 
@@ -35,11 +37,11 @@
   kubernetes.core.k8s:
     state: present
     definition: "{{ lookup('template', 'networkpolicy-egress.yaml.j2') }}"
-  loop: "{{ cluster_hardening_namespaces }}"
+  loop: "{{ self_saas_projects | default([]) }}"
   when:
     - cluster_hardening_networkpolicy_enabled
-    - item in cluster_hardening_existing_namespaces
+    - project.name in cluster_hardening_existing_namespaces
   loop_control:
-    loop_var: namespace_name
+    loop_var: project
   delegate_to: localhost
   become: false

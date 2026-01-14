@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-egress
-  namespace: {{ namespace_name }}
+  namespace: {{ project.name }}
 spec:
   podSelector: {}
   policyTypes:
@@ -12,7 +12,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-egress-dns
-  namespace: {{ namespace_name }}
+  namespace: {{ project.name }}
 spec:
   podSelector: {}
   policyTypes:
@@ -35,7 +35,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-egress-cluster
-  namespace: {{ namespace_name }}
+  namespace: {{ project.name }}
 spec:
   podSelector: {}
   policyTypes:
@@ -52,7 +52,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-egress-internet-https
-  namespace: {{ namespace_name }}
+  namespace: {{ project.name }}
 spec:
   podSelector: {}
   policyTypes:
