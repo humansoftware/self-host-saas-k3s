@@ -1,0 +1,16 @@
+---
+cluster_hardening_namespaces:
+  - analisedefiis
+  - example-self-hosted-saas-app
+  - mypicscc
+  - youread
+
+cluster_hardening_psa_enforce: baseline
+cluster_hardening_psa_warn: restricted
+cluster_hardening_psa_audit: restricted
+
+cluster_pod_cidr: "10.42.0.0/16"
+cluster_service_cidr: "10.43.0.0/16"
+
+cluster_hardening_networkpolicy_enabled: true
+cluster_hardening_allow_internet_https: true
