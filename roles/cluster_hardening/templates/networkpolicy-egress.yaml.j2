@@ -47,6 +47,23 @@ spec:
         - ipBlock:
             cidr: {{ cluster_service_cidr }}
 ---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-kubernetes-api
+  namespace: {{ project.name }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: {{ host_public_ip }}/32
+      ports:
+        - protocol: TCP
+          port: {{ k3s_api_port }}
+---
 {% if cluster_hardening_allow_internet_https %}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
