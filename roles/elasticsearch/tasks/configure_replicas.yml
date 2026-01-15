@@ -1,0 +1,71 @@
+---
+- name: Ensure previous Elasticsearch replicas job is absent
+  kubernetes.core.k8s:
+    state: absent
+    api_version: batch/v1
+    kind: Job
+    name: elasticsearch-replicas-config
+    namespace: "{{ elasticsearch_namespace }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Configure default replicas for Elasticsearch indices
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: elasticsearch-replicas-config
+        namespace: "{{ elasticsearch_namespace }}"
+      spec:
+        backoffLimit: 1
+        template:
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: curl
+                image: curlimages/curl:8.7.1
+                command:
+                  - sh
+                  - -c
+                  - |
+                    set -e
+                    curl -k -X PUT "https://elasticsearch-master:9200/_index_template/single-node-default" \
+                      -u "{{ elasticsearch_admin_username }}:{{ elasticsearch_admin_password }}" \
+                      -H 'Content-Type: application/json' \
+                      -d "{\"index_patterns\":[\"*\"],\"template\":{\"settings\":{\"number_of_replicas\":{{ elasticsearch_default_replicas }}}},\"priority\":1}"
+                    {% if elasticsearch_update_existing_replicas %}
+                    curl -k -X PUT "https://elasticsearch-master:9200/_settings" \
+                      -u "{{ elasticsearch_admin_username }}:{{ elasticsearch_admin_password }}" \
+                      -H 'Content-Type: application/json' \
+                      -d "{\"index.number_of_replicas\":{{ elasticsearch_default_replicas }}}"
+                    {% endif %}
+  when: elasticsearch_apply_default_replicas_template
+  delegate_to: localhost
+  run_once: true
+
+- name: Wait for Elasticsearch replicas job to complete
+  kubernetes.core.k8s_info:
+    api_version: batch/v1
+    kind: Job
+    namespace: "{{ elasticsearch_namespace }}"
+    name: elasticsearch-replicas-config
+  register: replicas_job_info
+  until: replicas_job_info.resources[0].status.succeeded is defined and replicas_job_info.resources[0].status.succeeded > 0
+  retries: 6
+  delay: 10
+  when: elasticsearch_apply_default_replicas_template
+  delegate_to: localhost
+  run_once: true
+
+- name: Clean up Elasticsearch replicas job
+  kubernetes.core.k8s:
+    state: absent
+    api_version: batch/v1
+    kind: Job
+    name: elasticsearch-replicas-config
+    namespace: "{{ elasticsearch_namespace }}"
+  when: elasticsearch_apply_default_replicas_template
+  delegate_to: localhost
+  run_once: true
