@@ -68,3 +68,32 @@ spec:
         - protocol: TCP
           port: 443
 {% endif %}
+{% if project.network_policy is defined and project.network_policy.egress is defined and project.network_policy.egress | length > 0 %}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-extra
+  namespace: {{ project.name }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+{% for rule in project.network_policy.egress %}
+    - to:
+        - ipBlock:
+            cidr: {{ rule.cidr }}
+{% if rule.except is defined and rule.except | length > 0 %}
+            except:
+{% for block in rule.except %}
+              - {{ block }}
+{% endfor %}
+{% endif %}
+      ports:
+{% for port_rule in rule.ports %}
+        - protocol: {{ port_rule.protocol | default('TCP') }}
+          port: {{ port_rule.port }}
+{% endfor %}
+{% endfor %}
+{% endif %}
