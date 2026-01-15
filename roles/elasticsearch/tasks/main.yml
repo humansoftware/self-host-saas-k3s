@@ -31,6 +31,9 @@
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
 
+- name: Configure Elasticsearch replicas
+  ansible.builtin.include_tasks: configure_replicas.yml
+
 - name: Create Elasticsearch indices for projects
   ansible.builtin.include_tasks: create_indices.yml
 

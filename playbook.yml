@@ -66,6 +66,8 @@
       tags: elasticsearch
     - role: create_projects_secrets
       tags: create_projects_secrets
+    - role: cluster_hardening
+      tags: cluster_hardening
 
 - name: Trust Harbor CA in containerd
   hosts: k3s_cluster

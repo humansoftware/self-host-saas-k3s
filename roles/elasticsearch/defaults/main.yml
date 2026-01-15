@@ -16,3 +16,7 @@ elasticsearch_local_port: 9200
 
 # Authentication
 elasticsearch_admin_username: "elastic"
+
+elasticsearch_default_replicas: 0
+elasticsearch_apply_default_replicas_template: true
+elasticsearch_update_existing_replicas: true

@@ -1,0 +1,47 @@
+---
+- name: Fetch namespaces
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+  register: cluster_hardening_namespaces_info
+  delegate_to: localhost
+  become: false
+
+- name: Set existing namespaces list
+  ansible.builtin.set_fact:
+    cluster_hardening_existing_namespaces: "{{ cluster_hardening_namespaces_info.resources | map(attribute='metadata.name') | list }}"
+
+- name: Apply Pod Security Admission labels
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ project.name }}"
+        labels:
+          pod-security.kubernetes.io/enforce: "{{ cluster_hardening_psa_enforce }}"
+          pod-security.kubernetes.io/enforce-version: "latest"
+          pod-security.kubernetes.io/warn: "{{ cluster_hardening_psa_warn }}"
+          pod-security.kubernetes.io/warn-version: "latest"
+          pod-security.kubernetes.io/audit: "{{ cluster_hardening_psa_audit }}"
+          pod-security.kubernetes.io/audit-version: "latest"
+  loop: "{{ self_saas_projects | default([]) }}"
+  when: project.name in cluster_hardening_existing_namespaces
+  loop_control:
+    loop_var: project
+  delegate_to: localhost
+  become: false
+
+- name: Apply default egress policies
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'networkpolicy-egress.yaml.j2') }}"
+  loop: "{{ self_saas_projects | default([]) }}"
+  when:
+    - cluster_hardening_networkpolicy_enabled
+    - project.name in cluster_hardening_existing_namespaces
+  loop_control:
+    loop_var: project
+  delegate_to: localhost
+  become: false
