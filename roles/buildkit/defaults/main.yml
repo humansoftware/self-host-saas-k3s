@@ -1,0 +1,6 @@
+---
+buildkit_namespace: buildkit
+buildkit_image: moby/buildkit:v0.13.2
+buildkit_listen_addr: tcp://0.0.0.0:1234
+buildkit_service_port: 1234
+buildkit_registry_host: "{{ harbor_domain }}"

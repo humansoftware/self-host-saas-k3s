@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buildkitd
+  namespace: {{ buildkit_namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: buildkitd
+  template:
+    metadata:
+      labels:
+        app: buildkitd
+      annotations:
+        buildkitd-config-hash: "{{ lookup('template', 'buildkitd-config.toml.j2') | hash('sha1') }}"
+    spec:
+      containers:
+        - name: buildkitd
+          image: {{ buildkit_image }}
+          securityContext:
+            privileged: true
+          args:
+            - --addr
+            - {{ buildkit_listen_addr }}
+            - --config
+            - /etc/buildkit/buildkitd.toml
+          ports:
+            - containerPort: {{ buildkit_service_port }}
+          volumeMounts:
+            - name: buildkit-config
+              mountPath: /etc/buildkit/buildkitd.toml
+              subPath: buildkitd.toml
+            - name: buildkit-data
+              mountPath: /var/lib/buildkit
+      volumes:
+        - name: buildkit-config
+          configMap:
+            name: buildkitd-config
+        - name: buildkit-data
+          emptyDir: {}

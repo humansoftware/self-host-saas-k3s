@@ -27,7 +27,7 @@
                   - sh
                   - -c
                   - |
-                    project_id=$(curl -sk -u admin:${HARBOR_ADMIN_PASSWORD} "https://{{ harbor_domain }}/api/v2.0/projects?name={{ project.name }}" | grep -o 'project_id\":[0-9]*' | head -1 | cut -d: -f2)
+                    project_id=$(curl -s -u admin:${HARBOR_ADMIN_PASSWORD} "http://{{ harbor_domain }}/api/v2.0/projects?name={{ project.name }}" | grep -o 'project_id\":[0-9]*' | head -1 | cut -d: -f2)
                     echo "Project ID: $project_id"
                     payload='''{{ lookup('template', 'roles/harbor/templates/retention_payload.json.j2') }}'''
                     payload=$(echo "$payload" | sed "s/PROJECT_ID_PLACEHOLDER/$project_id/")
@@ -37,7 +37,7 @@
                     echo "$payload" > /tmp/payload.json
                     response=$(curl -sk \
                       -u admin:${HARBOR_ADMIN_PASSWORD} \
-                      -X POST "https://{{ harbor_domain }}/api/v2.0/retentions" \
+                      -X POST "http://{{ harbor_domain }}/api/v2.0/retentions" \
                       -H "Content-Type: application/json" \
                       -d @/tmp/payload.json \
                       -w "\nHTTP_STATUS:%{http_code}\n"

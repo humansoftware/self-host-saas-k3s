@@ -1,0 +1,30 @@
+- name: Ensure containerd trust directories for Harbor exist
+  ansible.builtin.file:
+    path: "{{ item }}/{{ harbor_domain }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - /etc/containerd/certs.d
+    - /var/lib/rancher/k3s/agent/etc/containerd/certs.d
+
+- name: Configure containerd to use Harbor over HTTP
+  ansible.builtin.copy:
+    dest: "{{ item }}/{{ harbor_domain }}/hosts.toml"
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      server = "http://{{ harbor_domain }}"
+
+      [host."http://{{ harbor_domain }}"]
+        capabilities = ["pull", "resolve", "push"]
+  loop:
+    - /etc/containerd/certs.d
+    - /var/lib/rancher/k3s/agent/etc/containerd/certs.d
+
+- name: Restart k3s to reload registry config
+  ansible.builtin.service:
+    name: k3s
+    state: restarted

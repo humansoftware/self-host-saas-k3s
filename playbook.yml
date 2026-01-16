@@ -48,6 +48,8 @@
       tags: harbor
     - role: argocd
       tags: argocd
+    - role: buildkit
+      tags: buildkit
     - role: github_actions
       tags: github_actions
     - role: monitoring
@@ -69,9 +71,9 @@
     - role: cluster_hardening
       tags: cluster_hardening
 
-- name: Trust Harbor CA in containerd
+- name: Configure k3s to access Harbor
   hosts: k3s_cluster
   become: true
   roles:
-    - role: add_harbor_ca_certs_to_k3s
-      tags: add_harbor_ca_certs_to_k3s
+    - role: configure_k3s_to_access_harbor
+      tags: configure_k3s_to_access_harbor

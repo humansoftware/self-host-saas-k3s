@@ -1,7 +1,7 @@
 ---
 # Default variables for roles/argocd
 # Pin the chart version for reproducible installs. Change as needed.
-argocd_image_updater_chart_version: "0.12.3"
+argocd_image_updater_chart_version: "0.14.0"
 # Argo CD chart version pinned to the version currently installed in the cluster
 # (safer choice based on `helm list --all-namespaces`)
 argocd_chart_version: "9.1.6"
