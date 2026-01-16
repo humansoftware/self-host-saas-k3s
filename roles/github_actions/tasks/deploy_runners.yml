@@ -1,10 +1,16 @@
-- name: Get Harbor TLS secret
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Secret
-    namespace: "{{ harbor_namespace }}"
-    name: "{{ harbor_tls_secret_name }}"
-  register: harbor_tls_secret
+- name: Create Harbor Docker auth secret for each app repo
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ github_actions_dockerconfig_secret_name }}"
+        namespace: "{{ item.name }}"
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: "{{ {'auths': {harbor_domain: {'username': harbor_admin_username, 'password': harbor_admin_password, 'auth': (harbor_admin_username ~ ':' ~ harbor_admin_password) | b64encode}}} | to_json | b64encode }}"
+  loop: "{{ self_saas_projects }}"
 
 - name: Deploy GitHub Actions Runner for each app repo
   ansible.builtin.template:

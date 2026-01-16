@@ -3,5 +3,6 @@ github_actions_runner_replicas_default: 1
 
 # Pin actions-runner-controller Helm chart to the latest available on or before 2025-07-31
 actions_runner_controller_chart_version: "0.23.7"
-github_actions_docker_dind_tag: "20.10.24-dind"
+github_actions_docker_dind_tag: "20.10.24-dind-rootless"
 github_actions_runner_image_tag: "v2.330.0-ubuntu-24.04"
+github_actions_dockerconfig_secret_name: harbor-docker-config

@@ -1,0 +1,83 @@
+---
+- name: Ensure buildkit namespace exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ buildkit_namespace }}"
+  delegate_to: localhost
+  become: false
+
+- name: Apply buildkitd config
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: buildkitd-config
+        namespace: "{{ buildkit_namespace }}"
+      data:
+        buildkitd.toml: "{{ lookup('template', 'buildkitd-config.toml.j2') }}"
+  delegate_to: localhost
+  become: false
+
+- name: Deploy buildkitd
+  kubernetes.core.k8s:
+    state: present
+    force: true
+    definition: "{{ lookup('template', 'buildkitd-deployment.yaml.j2') }}"
+  delegate_to: localhost
+  become: false
+
+- name: Expose buildkitd service
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'buildkitd-service.yaml.j2') }}"
+  delegate_to: localhost
+  become: false
+
+- name: Create buildkit role for runner service accounts
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: buildkit-runner
+        namespace: "{{ buildkit_namespace }}"
+      rules:
+        - apiGroups: [""]
+          resources: ["pods", "pods/log", "pods/exec", "services", "configmaps", "secrets"]
+          verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+        - apiGroups: ["apps"]
+          resources: ["deployments", "replicasets"]
+          verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+        - apiGroups: ["batch"]
+          resources: ["jobs"]
+          verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  delegate_to: localhost
+  become: false
+
+- name: Bind buildkit role to project runner service accounts
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: "buildkit-runner-{{ item.name }}"
+        namespace: "{{ buildkit_namespace }}"
+      subjects:
+        - kind: ServiceAccount
+          name: "github-actions-runner-{{ item.name }}"
+          namespace: "{{ item.name }}"
+      roleRef:
+        kind: Role
+        name: buildkit-runner
+        apiGroup: rbac.authorization.k8s.io
+  loop: "{{ self_saas_projects | default([]) }}"
+  delegate_to: localhost
+  become: false

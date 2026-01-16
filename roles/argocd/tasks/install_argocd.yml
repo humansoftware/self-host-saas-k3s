@@ -28,7 +28,7 @@
             type: helm
             enableOCI: "true"
             name: "{{ harbor_hostname }}"
-            url: "https://{{ harbor_hostname }}"
+            url: "http://{{ harbor_hostname }}"
             username: "{{ harbor_admin_username }}"
             password: "{{ harbor_admin_password }}"
         params:
@@ -52,47 +52,6 @@
           trigger.on-unknown-sync-status: "{{ lookup('template', 'triggers/on-unknown-sync-status.yaml.j2') }}"
           trigger.on-sync-succeeded: "{{ lookup('template', 'triggers/on-sync-succeeded.yaml.j2') }}"
 
-- name: Get Harbor TLS secret from Kubernetes (for Image Updater CA)
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Secret
-    namespace: "{{ harbor_namespace }}"
-    name: "{{ harbor_tls_secret_name }}"
-  register: harbor_tls_secret
-  delegate_to: localhost
-  become: false
-
-- name: Create Secret for Harbor Image Updater credentials
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: argocd-image-updater-harbor-credentials
-        namespace: argocd
-      stringData:
-      # Force a rollout when the Harbor CA secret changes by embedding
-      # the secret's resourceVersion as a pod annotation. When the
-      # secret is updated, resourceVersion changes and the deployment
-      # pod template will change, triggering a rollout.
-      podAnnotations:
-        harbor-ca-secret-revision: "{{ harbor_tls_secret.resources[0].metadata.resourceVersion }}"
-        username: "{{ harbor_admin_username }}"
-        password: "{{ harbor_admin_password }}"
-
-- name: Create secret with Harbor CA certificate
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: harbor-ca-cert
-        namespace: argocd
-      data:
-        ca.crt: "{{ harbor_tls_secret.resources[0].data['ca.crt'] }}"
-
 - name: Install Argo CD Image Updater via Helm
   kubernetes.core.helm:
     name: argocd-image-updater
@@ -108,20 +67,8 @@
           plaintext: true
           insecure: true
         registries:
-          - name: harbor
-            api_url: "https://{{ harbor_hostname }}"
+          - name: "{{ harbor_hostname }}"
+            api_url: "http://{{ harbor_hostname }}"
             prefix: "{{ harbor_hostname }}/"
-            credentials: "secret:argocd-image-updater-harbor-credentials#username:password"
+            insecure: true
       replicaCount: 1
-      volumeMounts:
-        - name: custom-ca
-          mountPath: /etc/ssl/certs/harbor-ca.crt
-          subPath: ca.crt
-          readOnly: true
-      volumes:
-        - name: custom-ca
-          secret:
-            secretName: harbor-ca-cert
-      extraEnv:
-        - name: SSL_CERT_FILE
-          value: /etc/ssl/certs/harbor-ca.crt

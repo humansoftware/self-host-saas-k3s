@@ -13,25 +13,23 @@ spec:
     spec:
       serviceAccountName: github-actions-runner-{{ item.name }}
       repository: {{ item.github_repo_http_url | regex_replace('^https://github.com/', '') | regex_replace('.git$', '') }}
+      dockerEnabled: false
       labels:
         - self-hosted
         - {{ item.name }}
       containers:
-        - name: docker
-          image: docker:{{ github_actions_docker_dind_tag }}
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: harbor-ca
-              mountPath: /etc/docker/certs.d/{{harbor_domain}}/ca.crt
-              subPath: ca.crt
         - name: runner
           image: summerwind/actions-runner:{{ github_actions_runner_image_tag }}
           volumeMounts:
-            - name: harbor-ca
-              mountPath: /etc/buildkit/certs/{{harbor_domain}}/ca.crt
-              subPath: ca.crt
+            - name: docker-config
+              mountPath: /home/runner/.docker
+            - name: docker-auth
+              mountPath: /home/runner/.docker/config.json
+              subPath: .dockerconfigjson
+              readOnly: true
       volumes:
-        - name: harbor-ca
+        - name: docker-config
+          emptyDir: {}
+        - name: docker-auth
           secret:
-            secretName: harbor-ca
+            secretName: {{ github_actions_dockerconfig_secret_name }}

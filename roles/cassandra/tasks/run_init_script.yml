@@ -1,6 +1,17 @@
 ---
 - name: Run Cassandra initialization script with cqlsh
   kubernetes.core.k8s:
+    state: absent
+    definition:
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: cassandra-init-job
+        namespace: "{{ cassandra_namespace }}"
+  ignore_errors: true
+
+- name: Run Cassandra initialization script with cqlsh
+  kubernetes.core.k8s:
     state: present
     definition:
       apiVersion: batch/v1

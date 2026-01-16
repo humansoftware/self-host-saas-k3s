@@ -4,6 +4,7 @@
 
 - name: Setup Harbor certificates
   ansible.builtin.include_tasks: setup_certificates.yml
+  when: harbor_use_tls | default(true)
 
 - name: Install Harbor
   ansible.builtin.include_tasks: install.yml

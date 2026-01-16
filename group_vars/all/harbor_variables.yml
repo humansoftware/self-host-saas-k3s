@@ -1,6 +1,7 @@
 harbor_namespace: harbor
 harbor_domain: "harbor.local" # Access via ssh tunnel, see readme.md
-harbor_external_url: "https://{{ harbor_domain }}"
+harbor_external_url: "http://{{ harbor_domain }}"
+harbor_use_tls: false
 
 harbor_hostname: "{{ harbor_domain }}"
 harbor_admin_username: "{{ common_admin_username }}"
