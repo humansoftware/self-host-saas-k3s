@@ -21,6 +21,20 @@
         postgresPassword: "{{ postgres_admin_password }}"
         databases: "{{ postgres_databases }}"
       primary:
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 250m
+          limits:
+            memory: 2Gi
+            cpu: 1
+        postgresqlConfiguration:
+          shared_buffers: "256MB"
+          work_mem: "16MB"
+          maintenance_work_mem: "128MB"
+          autovacuum_max_workers: "3"
+          autovacuum_vacuum_cost_limit: "200"
+          checkpoint_completion_target: "0.9"
         persistence:
           enabled: true
           storageClass: "{{ postgres_storage_class }}"
