@@ -13,6 +13,19 @@
            map('regex_replace', '^', 'mailu.') |
            list }}
       domain: "{{ mailu_main_domain }}"
+      subnet: "{{ mailu_subnet }}"
+      # Add the cluster pod CIDR to rspamd's DKIM sign_networks so that
+      # in-cluster services (e.g. application pods sending SMTP) get their
+      # outbound mail DKIM-signed. The upstream default `["127.2.4.7"]`
+      # is a bug inherited from a commercial service — see
+      # https://github.com/rspamd/rspamd/issues/5341 — and matches no IP
+      # in a typical K8s pod network. `mailu_subnet` is sourced from the
+      # same value as the Helm `subnet` above so the postfix mynetworks
+      # and rspamd sign_networks stay in sync.
+      rspamd:
+        overrides:
+          dkim_signing.conf: |
+            sign_networks = ["127.2.4.7", "{{ mailu_subnet }}"];
       customization:
         website: "http://localhost:8083/"
       ingress:
