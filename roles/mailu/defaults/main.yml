@@ -11,3 +11,8 @@ mailu_roundcube_password: "someStrongPassword"
 mailu_secret_key: "someSecretKey"
 
 mailu_chart_version: "2.6.3"
+
+# Subnet used for both the Helm `subnet` value (becomes Mailu's SUBNET env var
+# and defines Postfix mynetworks) and rspamd's DKIM `sign_networks`.
+# Defaults to the K3s/Flannel pod CIDR; override per-cluster in secrets.prod.yml.
+mailu_subnet: "10.42.0.0/16"
