@@ -12,7 +12,7 @@
 
 - name: Create postmaster user for {{ item.name }}
   ansible.builtin.shell: >
-    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- python3 -m flask mailu user -m update postmaster {{ item.domain }} '{{ item.mailu.postmaster_password }}'
+    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- python3 -m flask mailu user postmaster {{ item.domain }} '{{ item.mailu.postmaster_password }}'
   when: item.mailu.enabled | default(false) and item.mailu.postmaster_password is defined
   delegate_to: localhost
   run_once: true
