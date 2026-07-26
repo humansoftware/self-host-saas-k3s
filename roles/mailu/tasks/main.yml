@@ -41,3 +41,10 @@
 
     loop_var: item
   when: item.mailu.enabled | default(false)
+
+- name: Configure postmaster user in Mailu
+  ansible.builtin.include_tasks: configure_postmaster_user.yml
+  loop: "{{ self_saas_projects | default([]) }}"
+  loop_control:
+    loop_var: item
+  when: item.mailu.enabled | default(false)
