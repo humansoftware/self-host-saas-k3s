@@ -1,0 +1,24 @@
+---
+- name: Get Mailu admin pod name for postmaster user
+  ansible.builtin.shell: >
+    kubectl get pods -n mailu -l app.kubernetes.io/name=mailu -o jsonpath="{.items[0].metadata.name}"
+  register: mailu_admin_pod_name_result
+  delegate_to: localhost
+  run_once: true
+
+- name: Set mailu_admin_pod_name fact for postmaster user
+  ansible.builtin.set_fact:
+    mailu_admin_pod_name: "{{ mailu_admin_pod_name_result.stdout }}"
+
+- name: Create postmaster user for {{ item.name }}
+  ansible.builtin.shell: >
+    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- python3 -m flask mailu user -m update postmaster {{ item.domain }} '{{ item.mailu.postmaster_password }}'
+  when: item.mailu.enabled | default(false) and item.mailu.postmaster_password is defined
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  failed_when: >-
+    mailu_postmaster_user_result.rc != 0 and
+    'User postmaster@' + item.domain + ' already exists' not in mailu_postmaster_user_result.stderr and
+    'UNIQUE constraint failed: user.email' not in mailu_postmaster_user_result.stderr
+  register: mailu_postmaster_user_result
