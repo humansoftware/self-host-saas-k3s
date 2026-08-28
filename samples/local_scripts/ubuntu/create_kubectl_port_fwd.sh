@@ -22,8 +22,8 @@ LOKI_RELEASE="${LOKI_RELEASE:-loki}"
 # Forward Grafana UI (service name from kube-prometheus-stack)
 GRAFANA_SVC="${PROM_RELEASE}-grafana"
 if kubectl -n monitoring get svc "${GRAFANA_SVC}" >/dev/null 2>&1; then
-    kubectl -n monitoring port-forward svc/${GRAFANA_SVC} 3000:80 &
-    echo "Grafana: http://localhost:3000 (admin/admin or your custom credentials)"
+    kubectl -n monitoring port-forward svc/${GRAFANA_SVC} 3010:80 &
+    echo "Grafana: http://localhost:3010 (admin/admin or your custom credentials)"
 else
     echo "Warning: service ${GRAFANA_SVC} not found in namespace monitoring; skipping Grafana port-forward"
 fi

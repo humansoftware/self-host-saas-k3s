@@ -27,10 +27,10 @@ grafana_admin_password: admin
 1. Set up port forwarding:
 
    ```bash
-   kubectl -n monitoring port-forward svc/grafana 3000:80
+   kubectl -n monitoring port-forward svc/grafana 3010:80
    ```
 
-2. Access the UI at [http://localhost:3000](http://localhost:3000)
+2. Access the UI at [http://localhost:3010](http://localhost:3010)
 
 3. Login with:
    - Username: `admin`
