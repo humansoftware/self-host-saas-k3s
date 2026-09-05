@@ -29,3 +29,17 @@
   changed_when: false
   failed_when: "'User ' + item.mailu.user + '@' + item.domain + ' already exists' not in mailu_user_add_result.stderr and mailu_user_add_result.rc != 0"
   register: mailu_user_add_result
+
+- name: Add devnull user for {{ item.name }}
+  ansible.builtin.shell: >
+    kubectl exec -n mailu {{ mailu_admin_pod_name }} -- python3 -m flask mailu user devnull {{ item.domain }} '{{ lookup("password", "/dev/null length=48 chars=ascii_letters,digits") }}'
+  when: item.mailu.enabled | default(false)
+  delegate_to: localhost
+  run_once: true
+  changed_when: false
+  no_log: true
+  failed_when: >-
+    mailu_devnull_user_result.rc != 0 and
+    'User devnull@' + item.domain + ' already exists' not in mailu_devnull_user_result.stderr and
+    'UNIQUE constraint failed: user.email' not in mailu_devnull_user_result.stderr
+  register: mailu_devnull_user_result
