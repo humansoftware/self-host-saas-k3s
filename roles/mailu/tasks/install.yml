@@ -86,6 +86,13 @@
       postfix:
         updateStrategy:
           type: Recreate
+        overrides:
+          'transport.map': |
+{% for project in self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list %}
+            no-reply@{{ project.domain }} discard:
+            noreply@{{ project.domain }} discard:
+            devnull@{{ project.domain }} discard:
+{% endfor %}
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
   when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
