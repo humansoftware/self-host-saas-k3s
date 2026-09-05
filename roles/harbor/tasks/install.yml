@@ -41,3 +41,26 @@
               size: "{{ harbor_jobservice_size }}"
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
+  # The kubelet reapplies fsGroup (recursive chown/chmod adding group-write
+  # + setgid) every time a Longhorn volume is remounted, even while the pod
+  # is running. Postgres refuses a data directory with group-write
+  # permissions, so a remount crashloops harbor-database and takes the whole
+  # registry down ("Core service is not available"). The chart
+  # (templates/database/database-ss.yaml) hardcodes the pod securityContext
+  # and does not expose fsGroupChangePolicy, so we patch it here:
+  # OnRootMismatch skips the recursive rewrite when the volume root already
+  # matches fsGroup, which is the steady state for this PVC. Idempotent:
+  # once applied, further runs change nothing and do not trigger a rolling
+  # restart. Keeps the data-permissions-ensurer init container non-root.
+- name: Keep Harbor database data-dir permissions stable across volume remounts
+  kubernetes.core.k8s:
+    state: patched
+    kind: StatefulSet
+    name: harbor-database
+    namespace: "{{ harbor_namespace }}"
+    definition:
+      spec:
+        template:
+          spec:
+            securityContext:
+              fsGroupChangePolicy: OnRootMismatch
