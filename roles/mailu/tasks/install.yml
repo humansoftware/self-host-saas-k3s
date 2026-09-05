@@ -1,3 +1,12 @@
+- name: Build Mailu no-reply discard transport map
+  ansible.builtin.set_fact:
+    mailu_no_reply_transport: |
+      {% for project in self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list %}
+      no-reply@{{ project.domain }} discard:
+      noreply@{{ project.domain }} discard:
+      devnull@{{ project.domain }} discard:
+      {% endfor %}
+
 - name: Install Mailu using Helm for enabled projects (public SMTP)
   kubernetes.core.helm:
     name: "mailu"
@@ -88,11 +97,7 @@
           type: Recreate
         overrides:
           'transport.map': |
-{% for project in self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list %}
-            no-reply@{{ project.domain }} discard:
-            noreply@{{ project.domain }} discard:
-            devnull@{{ project.domain }} discard:
-{% endfor %}
+            {{ mailu_no_reply_transport }}
     wait: true
     wait_timeout: "{{ helm_install_timeout }}"
   when: self_saas_projects | selectattr('mailu.enabled', 'defined') | selectattr('mailu.enabled') | list | length > 0
