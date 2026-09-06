@@ -3,6 +3,9 @@ monitoring_namespace: monitoring
 
 prometheus_enabled: true
 prometheus_storage_size: 10Gi
+# Prometheus retention (purge policy)
+prometheus_retention_time: 10d
+prometheus_retention_size: 8GiB
 prometheus_storage_class: longhorn-single-replica
 prometheus_alertmanager_enabled: true
 prometheus_alertmanager_storage_size: 1Gi

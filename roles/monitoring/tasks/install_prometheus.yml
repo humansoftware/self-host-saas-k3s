@@ -88,6 +88,9 @@
           relabelConfigs:
             - targetLabel: cluster
               replacement: "{{ prometheus_cluster_name | default('self-host-saas-k3s') }}"
+          # Retention: time-based and size-based purge (prevent PVC full → CrashLoopBackOff)
+          retention: "{{ prometheus_retention_time }}"
+          retentionSize: "{{ prometheus_retention_size }}"
           storageSpec:
             volumeClaimTemplate:
               spec:
