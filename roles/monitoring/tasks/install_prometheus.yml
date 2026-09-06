@@ -91,9 +91,12 @@
           # Retention: time-based and size-based purge (prevent PVC full → CrashLoopBackOff)
           retention: "{{ prometheus_retention_time }}"
           retentionSize: "{{ prometheus_retention_size }}"
-          # Custom alerts (storage exhaustion early-warning)
-          additionalPrometheusRules:
-            - groups:
+          # Custom alerts (storage exhaustion early-warning). Uses Map form
+          # because the list form requires a top-level 'name' per item and
+          # we want one PrometheusRule object named 'prometheus-storage'.
+          additionalPrometheusRulesMap:
+            prometheus-storage:
+              groups:
                 - name: prometheus-storage
                   rules:
                     - alert: PrometheusStorageFillingFast
