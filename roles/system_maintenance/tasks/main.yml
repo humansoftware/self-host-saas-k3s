@@ -12,7 +12,7 @@
     owner: root
     group: root
     mode: "0644"
-  notify: reload unattended-upgrades
+  notify: restart unattended-upgrades
 
 - name: Deploy /etc/apt/apt.conf.d/20auto-upgrades
   ansible.builtin.template:
@@ -21,7 +21,7 @@
     owner: root
     group: root
     mode: "0644"
-  notify: reload unattended-upgrades
+  notify: restart unattended-upgrades
 
 - name: Enable and start apt-daily.timer
   ansible.builtin.systemd:
@@ -35,7 +35,7 @@
     enabled: true
     state: started
 
-- name: Verify unattended-upgrades config is valid (dry-run)
+- name: Verify unattended-upgrades config (dry-run)
   ansible.builtin.command: unattended-upgrade --dry-run --debug
   register: _unattended_dryrun
   changed_when: false
@@ -44,13 +44,5 @@
 
 - name: Show unattended-upgrades dry-run output (last 20 lines)
   ansible.builtin.debug:
-    msg: "{{ _unattended_dryrun.stdout_lines[-20:] }}"
+    msg: "{{ _unattended_dryrun.stdout_lines[-20:] | default(['(no output)']) }}"
   when: _unattended_dryrun.stdout_lines is defined
-
-- name: Flush handlers to apply config reload before next playbook steps
-  ansible.builtin.meta: flush_handlers
-
-- name: Reload unattended-upgrades
-  ansible.builtin.command: systemctl restart unattended-upgrades.service
-  changed_when: false
-  listen: reload unattended-upgrades
