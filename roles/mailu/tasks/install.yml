@@ -54,7 +54,7 @@
         username: "{{ mailu_admin_username }}"
         password: "{{ mailu_admin_password }}"
         domain: "{{ mailu_main_domain }}"
-        mode: "update"
+        mode: "ifmissing"
       persistence:
         enabled: true
         storageClass: "{{ mailu_storage_class }}"
