@@ -1,0 +1,35 @@
+// Ansible-managed: /etc/apt/apt.conf.d/50unattended-upgrades
+// See roles/system_maintenance/defaults/main.yml for tunables.
+
+Unattended-Upgrade::Allowed-Origins {
+{% for origin in unattended_upgrades_allowed_origins %}
+    "{{ origin }}";
+{% endfor %}
+};
+
+// Auto-fix dpkg interruptions before attempting upgrades
+Unattended-Upgrade::AutoFixInterruptedDpkg "{{ unattended_upgrades_autofix_interrupted_dpkg }}";
+
+// Do minimal upgrade steps (no opportunistic upgrades)
+Unattended-Upgrade::MinimalSteps "{{ unattended_upgrades_minimal_steps }}";
+
+// Do NOT auto-reboot (single-node k3s requires manual reboot)
+Unattended-Upgrade::Automatic-Reboot "{{ unattended_upgrades_automatic_reboot }}";
+
+// Keep /boot clean by removing old kernels
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "{{ unattended_upgrades_remove_unused_kernel_packages }}";
+
+// Remove new unused dependencies after upgrade
+Unattended-Upgrade::Remove-New-Unused-Dependencies "{{ unattended_upgrades_remove_new_unused_dependencies }}";
+
+// Remove unused dependencies
+Unattended-Upgrade::Remove-Unused-Dependencies "{{ unattended_upgrades_remove_unused_dependencies }}";
+
+// Log to syslog
+Unattended-Upgrade::SyslogEnable "{{ unattended_upgrades_syslog_enable }}";
+
+// Never auto-upgrade to a new distro release
+Unattended-Upgrade::DevRelease "{{ unattended_upgrades_dev_release }}";
+
+// Email reports (none configured — operator reads /var/log/unattended-upgrades/)
+Unattended-Upgrade::Mail "";

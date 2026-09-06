@@ -1,0 +1,56 @@
+---
+- name: Ensure unattended-upgrades package is installed
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: present
+    update_cache: false
+
+- name: Deploy /etc/apt/apt.conf.d/50unattended-upgrades
+  ansible.builtin.template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload unattended-upgrades
+
+- name: Deploy /etc/apt/apt.conf.d/20auto-upgrades
+  ansible.builtin.template:
+    src: 20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload unattended-upgrades
+
+- name: Enable and start apt-daily.timer
+  ansible.builtin.systemd:
+    name: apt-daily.timer
+    enabled: true
+    state: started
+
+- name: Enable and start apt-daily-upgrade.timer
+  ansible.builtin.systemd:
+    name: apt-daily-upgrade.timer
+    enabled: true
+    state: started
+
+- name: Verify unattended-upgrades config is valid (dry-run)
+  ansible.builtin.command: unattended-upgrade --dry-run --debug
+  register: _unattended_dryrun
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Show unattended-upgrades dry-run output (last 20 lines)
+  ansible.builtin.debug:
+    msg: "{{ _unattended_dryrun.stdout_lines[-20:] }}"
+  when: _unattended_dryrun.stdout_lines is defined
+
+- name: Flush handlers to apply config reload before next playbook steps
+  ansible.builtin.meta: flush_handlers
+
+- name: Reload unattended-upgrades
+  ansible.builtin.command: systemctl restart unattended-upgrades.service
+  changed_when: false
+  listen: reload unattended-upgrades

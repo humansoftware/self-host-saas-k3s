@@ -23,6 +23,13 @@
     - role: k3s_cluster
       tags: k3s_cluster
 
+- name: Configure system maintenance (unattended-upgrades)
+  hosts: k3s_cluster
+  become: true
+  roles:
+    - role: system_maintenance
+      tags: system_maintenance
+
 - name: Configure local k3s tunnel
   hosts: localhost
   gather_facts: false

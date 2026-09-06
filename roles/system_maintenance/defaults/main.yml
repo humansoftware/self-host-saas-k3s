@@ -1,0 +1,25 @@
+---
+# unattended-upgrades configuration for the k3s host
+# Strategy: install security + updates, but DO NOT auto-reboot
+# (single-node cluster — manual reboot during maintenance window required)
+
+unattended_upgrades_enabled: true
+unattended_upgrades_allowed_origins:
+  - "${distro_id}:${distro_codename}-security"
+  - "${distro_id}:${distro_codename}-updates"
+
+# Periodic schedule (apt-daily.timer triggers this)
+unattended_upgrades_update_package_lists: "1"
+unattended_upgrades_download_upgradeable: "1"
+unattended_upgrades_autoclean_interval: "7"
+unattended_upgrades_unattended_upgrade: "1"
+
+# Behavior
+unattended_upgrades_automatic_reboot: "false"
+unattended_upgrades_remove_unused_kernel_packages: "true"
+unattended_upgrades_remove_unused_dependencies: "true"
+unattended_upgrades_remove_new_unused_dependencies: "true"
+unattended_upgrades_minimal_steps: "true"
+unattended_upgrades_autofix_interrupted_dpkg: "true"
+unattended_upgrades_syslog_enable: "true"
+unattended_upgrades_dev_release: "false"

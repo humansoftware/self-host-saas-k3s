@@ -1,0 +1,14 @@
+// Ansible-managed: /etc/apt/apt.conf.d/20auto-upgrades
+// Controls when apt-daily.timer/apt-daily-upgrade.timer runs unattended-upgrades.
+
+// Update package lists daily
+APT::Periodic::Update-Package-Lists "{{ unattended_upgrades_update_package_lists }}";
+
+// Download upgradable packages daily
+APT::Periodic::Download-Upgradeable-Packages "{{ unattended_upgrades_download_upgradeable }}";
+
+// Run unattended-upgrade daily
+APT::Periodic::Unattended-Upgrade "{{ unattended_upgrades_unattended_upgrade }}";
+
+// Clean local cache weekly
+APT::Periodic::AutocleanInterval "{{ unattended_upgrades_autoclean_interval }}";

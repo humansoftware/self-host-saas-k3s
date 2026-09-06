@@ -91,6 +91,27 @@
           # Retention: time-based and size-based purge (prevent PVC full → CrashLoopBackOff)
           retention: "{{ prometheus_retention_time }}"
           retentionSize: "{{ prometheus_retention_size }}"
+          # Custom alerts (storage exhaustion early-warning)
+          additionalPrometheusRules:
+            - groups:
+                - name: prometheus-storage
+                  rules:
+                    - alert: PrometheusStorageFillingFast
+                      expr: predict_linear(prometheus_tsdb_storage_blocks_bytes[6h], 4 * 3600) > prometheus_tsdb_retention_limit_bytes
+                      for: 15m
+                      labels:
+                        severity: warning
+                      annotations:
+                        summary: "Prometheus disk will exceed {{ prometheus_retention_size }} in ~4h"
+                        description: "Linear projection of TSDB blocks over the last 6h predicts retention limit will be hit. Old data will be purged; if rate persists, expect silent loss."
+                    - alert: PrometheusStorageHigh
+                      expr: prometheus_tsdb_storage_blocks_bytes / prometheus_tsdb_retention_limit_bytes > 0.8
+                      for: 30m
+                      labels:
+                        severity: info
+                      annotations:
+                        summary: "Prometheus disk at >80% of retention limit"
+                        description: "TSDB blocks are using {{ $value | humanize }}% of {{ prometheus_retention_size }}."
           storageSpec:
             volumeClaimTemplate:
               spec:
