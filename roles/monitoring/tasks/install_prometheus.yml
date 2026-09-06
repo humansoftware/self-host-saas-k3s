@@ -111,7 +111,7 @@
                         severity: info
                       annotations:
                         summary: "Prometheus disk at >80% of retention limit"
-                        description: "TSDB blocks are using {{ $value | humanize }}% of {{ prometheus_retention_size }}."
+                        description: "TSDB blocks are using {% raw %}{{ $value | humanize }}{% endraw }}% of {{ prometheus_retention_size }}."
           storageSpec:
             volumeClaimTemplate:
               spec:
