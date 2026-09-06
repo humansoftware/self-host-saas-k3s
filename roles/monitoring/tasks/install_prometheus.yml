@@ -48,6 +48,29 @@
     create_namespace: false
     values:
       # Configure embedded Grafana in the kube-prometheus-stack using role variables
+      # Custom PrometheusRule for storage alerts. Chart template reads this at
+      # TOP LEVEL (.Values.additionalPrometheusRulesMap), not under prometheusSpec.
+      additionalPrometheusRulesMap:
+        prometheus-storage:
+          groups:
+            - name: prometheus-storage
+              rules:
+                - alert: PrometheusStorageFillingFast
+                  expr: predict_linear(prometheus_tsdb_storage_blocks_bytes[6h], 4 * 3600) > prometheus_tsdb_retention_limit_bytes
+                  for: 15m
+                  labels:
+                    severity: warning
+                  annotations:
+                    summary: "Prometheus disk will exceed {{ prometheus_retention_size }} in ~4h"
+                    description: "Linear projection of TSDB blocks over the last 6h predicts retention limit will be hit. Old data will be purged; if rate persists, expect silent loss."
+                - alert: PrometheusStorageHigh
+                  expr: prometheus_tsdb_storage_blocks_bytes / prometheus_tsdb_retention_limit_bytes > 0.8
+                  for: 30m
+                  labels:
+                    severity: info
+                  annotations:
+                    summary: "Prometheus disk at >80% of retention limit"
+                    description: "TSDB blocks are using more than 80% of the {{ prometheus_retention_size }} retention limit. Old blocks will be purged; if rate persists, expect silent loss."
       grafana:
         enabled: "{{ grafana_enabled | default(false) | bool }}"
         persistence:
@@ -91,30 +114,8 @@
           # Retention: time-based and size-based purge (prevent PVC full → CrashLoopBackOff)
           retention: "{{ prometheus_retention_time }}"
           retentionSize: "{{ prometheus_retention_size }}"
-          # Custom alerts (storage exhaustion early-warning). Uses Map form
-          # because the list form requires a top-level 'name' per item and
-          # we want one PrometheusRule object named 'prometheus-storage'.
-          additionalPrometheusRulesMap:
-            prometheus-storage:
-              groups:
-                - name: prometheus-storage
-                  rules:
-                    - alert: PrometheusStorageFillingFast
-                      expr: predict_linear(prometheus_tsdb_storage_blocks_bytes[6h], 4 * 3600) > prometheus_tsdb_retention_limit_bytes
-                      for: 15m
-                      labels:
-                        severity: warning
-                      annotations:
-                        summary: "Prometheus disk will exceed {{ prometheus_retention_size }} in ~4h"
-                        description: "Linear projection of TSDB blocks over the last 6h predicts retention limit will be hit. Old data will be purged; if rate persists, expect silent loss."
-                    - alert: PrometheusStorageHigh
-                      expr: prometheus_tsdb_storage_blocks_bytes / prometheus_tsdb_retention_limit_bytes > 0.8
-                      for: 30m
-                      labels:
-                        severity: info
-                      annotations:
-                        summary: "Prometheus disk at >80% of retention limit"
-                        description: "TSDB blocks are using more than 80% of the {{ prometheus_retention_size }} retention limit. Old blocks will be purged; if rate persists, expect silent loss."
+          # (custom PrometheusRule is at top-level of values; chart template reads
+          # .Values.additionalPrometheusRulesMap, not the nested prometheusSpec path)
           storageSpec:
             volumeClaimTemplate:
               spec:
