@@ -11,6 +11,7 @@
       loop_control:
         label: "{{ item.name }}"
       when: item.pushgateway is defined and (item.pushgateway.enabled | default(false) | bool)
+      no_log: true
 
     - name: Initialize pushgateway_basic_auth_users mapping
       ansible.builtin.set_fact:
@@ -24,6 +25,7 @@
       loop_control:
         label: "{{ item.name }}"
       when: item.pushgateway.enabled | default(false)
+      no_log: true
 
 - name: Install Pushgateway (for job metrics) using Helm
   when: prometheus_enabled and pushgateway_enabled
