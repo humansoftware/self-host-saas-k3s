@@ -49,6 +49,9 @@
         name: "github-actions-runner-{{ item.name }}"
         namespace: "{{ item.name }}"
   loop: "{{ self_saas_projects }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
 
 - name: Create Role for kubectl access in project namespace
   kubernetes.core.k8s:
@@ -64,6 +67,9 @@
           resources: ["*"]
           verbs: ["*"]
   loop: "{{ self_saas_projects }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
 
 - name: Bind ServiceAccount to Role in project namespace
   kubernetes.core.k8s:
@@ -83,3 +89,6 @@
         name: github-actions-runner-role
         apiGroup: rbac.authorization.k8s.io
   loop: "{{ self_saas_projects }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true

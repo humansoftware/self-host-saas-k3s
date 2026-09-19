@@ -79,5 +79,6 @@
         name: buildkit-runner
         apiGroup: rbac.authorization.k8s.io
   loop: "{{ self_saas_projects | default([]) }}"
+  no_log: true
   delegate_to: localhost
   become: false
