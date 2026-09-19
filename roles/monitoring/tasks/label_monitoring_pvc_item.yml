@@ -22,6 +22,22 @@
   register: remove_group_label_result
   changed_when: remove_group_label_result.rc == 0
 
+- name: Ensure monitoring snapshot cleanup group present on PVC
+  when: (pvc.metadata.labels | default({})).get('recurring-job-group.longhorn.io/monitoring') != 'enabled'
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    name: "{{ pvc.metadata.name }}"
+    namespace: "{{ monitoring_namespace }}"
+    state: present
+    merge_type: strategic-merge
+    definition:
+      metadata:
+        labels:
+          recurring-job-group.longhorn.io/monitoring: "enabled"
+  register: add_cleanup_group_result
+  changed_when: add_cleanup_group_result.changed | default(false)
+
 - name: Read Longhorn volume for monitoring PVC
   when: pvc.spec.volumeName is defined
   kubernetes.core.k8s_info:
@@ -32,6 +48,17 @@
   register: longhorn_volume_info
   failed_when: false
   changed_when: false
+
+- name: Ensure monitoring snapshot cleanup group present on Longhorn volume
+  ansible.builtin.command: >-
+    kubectl -n longhorn-system label volume {{ pvc.spec.volumeName }}
+    recurring-job-group.longhorn.io/monitoring=enabled --overwrite
+  when:
+    - pvc.spec.volumeName is defined
+    - longhorn_volume_info.resources | default([]) | length > 0
+    - (longhorn_volume_info.resources[0].metadata.labels | default({})).get('recurring-job-group.longhorn.io/monitoring') != 'enabled'
+  register: add_volume_cleanup_group_result
+  changed_when: add_volume_cleanup_group_result.rc == 0
 
 - name: Remove `recurring-job-group.longhorn.io/default` label from Longhorn volume (if present)
   ansible.builtin.command: >-

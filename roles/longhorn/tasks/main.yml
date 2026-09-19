@@ -108,3 +108,21 @@
           - default
         retain: 4
         concurrency: 1
+
+- name: Create Longhorn monitoring snapshot cleanup job
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: longhorn.io/v1beta2
+      kind: RecurringJob
+      metadata:
+        name: monitoring-snapshot-cleanup
+        namespace: "{{ longhorn_namespace }}"
+      spec:
+        name: monitoring-snapshot-cleanup
+        cron: "0 4 * * *"
+        task: snapshot-cleanup
+        groups:
+          - monitoring
+        retain: 1
+        concurrency: 1

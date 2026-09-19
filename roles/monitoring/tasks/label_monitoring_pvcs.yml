@@ -6,13 +6,12 @@
     namespace: "{{ monitoring_namespace }}"
   register: monitoring_pvcs
 
-- name: Label monitoring PVCs with backup=skip
-  # We now use Longhorn recurring-job labels to opt PVCs out of the cluster-wide
-  # recurring backup. Longhorn will sync PVC labels to the Volume only when the
-  # PVC is marked as a source. Therefore we:
-  # 1) ensure `recurring-job.longhorn.io/source=enabled` is present on the PVC
-  # 2) remove the recurring-job-group label that assigns the PVC to `default`
-  #    recurring job group so the global RecurringJob no longer targets it.
+- name: Assign monitoring PVCs to a cleanup-only Longhorn recurring group
+  # Longhorn syncs PVC recurring-job labels to the associated Volume when the
+  # PVC is marked as a recurring-job source. Therefore we:
+  # 1) ensure the source label is present,
+  # 2) assign the cleanup-only monitoring group, and
+  # 3) remove the default group that runs the weekly backup.
   when: >-
     (monitoring_pvcs.resources | length > 0)
     and (label_monitoring_pvcs_skip_backup | default(true))
