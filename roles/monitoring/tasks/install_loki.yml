@@ -35,9 +35,13 @@
                   index:
                     prefix: index_
                     period: 24h
-            # Enable volume metrics reporting in Loki limits (required by Grafana log volume UI)
             limits_config:
               volume_enabled: true
+              retention_period: "{{ loki_retention_period }}"
+            compactor:
+              retention_enabled: true
+              working_directory: /var/loki/compactor
+              delete_request_store: filesystem
             commonConfig:
               replication_factor: "{{ loki_replication_factor }}"
           # defensive top-level object_store setting to avoid defaulting to s3
@@ -53,8 +57,8 @@
           # ensure minio subchart is explicitly disabled
           minio:
             enabled: false
-          # Disable auxiliary Loki components when running in SingleBinary mode
-          # on single-node clusters to avoid ring/ingester membership complexity.
+          # Keep the separate compactor workload disabled; retention is configured
+          # in the monolithic Loki process above.
           gateway:
             enabled: false
           chunksCache:

@@ -21,3 +21,25 @@
     kubectl -n {{ monitoring_namespace }} label pvc {{ pvc.metadata.name }} recurring-job-group.longhorn.io/default- --overwrite
   register: remove_group_label_result
   changed_when: remove_group_label_result.rc == 0
+
+- name: Read Longhorn volume for monitoring PVC
+  when: pvc.spec.volumeName is defined
+  kubernetes.core.k8s_info:
+    api_version: longhorn.io/v1beta2
+    kind: Volume
+    name: "{{ pvc.spec.volumeName }}"
+    namespace: longhorn-system
+  register: longhorn_volume_info
+  failed_when: false
+  changed_when: false
+
+- name: Remove `recurring-job-group.longhorn.io/default` label from Longhorn volume (if present)
+  ansible.builtin.command: >-
+    kubectl -n longhorn-system label volume {{ pvc.spec.volumeName }}
+    recurring-job-group.longhorn.io/default- --overwrite
+  when:
+    - pvc.spec.volumeName is defined
+    - longhorn_volume_info.resources | default([]) | length > 0
+    - (longhorn_volume_info.resources[0].metadata.labels | default({})).get('recurring-job-group.longhorn.io/default') is defined
+  register: remove_volume_group_label_result
+  changed_when: remove_volume_group_label_result.rc == 0
