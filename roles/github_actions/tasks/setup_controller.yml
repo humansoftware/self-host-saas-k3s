@@ -23,6 +23,7 @@
         namespace: actions-runner-system
       stringData:
         github_token: "{{ github_pat }}"
+  no_log: true
 
 - name: Install actions-runner-controller via Helm
   kubernetes.core.helm:

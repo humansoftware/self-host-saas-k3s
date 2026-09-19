@@ -11,6 +11,7 @@
       data:
         .dockerconfigjson: "{{ {'auths': {harbor_domain: {'username': harbor_admin_username, 'password': harbor_admin_password, 'auth': (harbor_admin_username ~ ':' ~ harbor_admin_password) | b64encode}}} | to_json | b64encode }}"
   loop: "{{ self_saas_projects }}"
+  no_log: true
 
 - name: Deploy GitHub Actions Runner for each app repo
   ansible.builtin.template:
@@ -19,9 +20,11 @@
     mode: '0644'
   loop: "{{ self_saas_projects }}"
   register: rendered_runner_deployments
+  no_log: true
 
 - name: Apply runner deployments
   kubernetes.core.k8s:
     state: present
     src: "{{ item.dest }}"
   loop: "{{ rendered_runner_deployments.results }}"
+  no_log: true
