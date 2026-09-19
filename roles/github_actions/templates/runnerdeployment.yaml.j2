@@ -4,7 +4,7 @@ metadata:
   name: {{ item.name }}-runner
   namespace: {{ item.name }}
 spec:
-  replicas: {{ item.github_actions.num_runners | default(github_actions_runner_replicas_default) }}
+  replicas: {{ [item.github_actions.num_runners | default(github_actions_runner_replicas_default), github_actions_runner_replicas_cap] | min }}
   template:
     metadata:
       annotations:
@@ -20,6 +20,13 @@ spec:
       containers:
         - name: runner
           image: summerwind/actions-runner:{{ github_actions_runner_image_tag }}
+          resources:
+            requests:
+              cpu: {{ github_actions_runner_cpu_request }}
+              memory: {{ github_actions_runner_memory_request }}
+            limits:
+              cpu: {{ github_actions_runner_cpu_limit }}
+              memory: {{ github_actions_runner_memory_limit }}
           volumeMounts:
             - name: docker-config
               mountPath: /home/runner/.docker

@@ -1,5 +1,12 @@
 debug = false
 
+[worker.oci]
+  gc = true
+  reservedSpace = "4GB"
+  maxUsedSpace = "12GB"
+  minFreeSpace = "20GB"
+  max-parallelism = 4
+
 [registry."{{ buildkit_registry_host }}"]
   insecure = true
   http = true

@@ -1,6 +1,13 @@
 # Default number of GitHub Actions runners per project
 github_actions_runner_replicas_default: 1
 
+# Cap concurrent runner pods per repository so CI cannot consume the whole node.
+github_actions_runner_replicas_cap: 2
+github_actions_runner_cpu_request: "500m"
+github_actions_runner_memory_request: "512Mi"
+github_actions_runner_cpu_limit: "2"
+github_actions_runner_memory_limit: "2Gi"
+
 # Pin actions-runner-controller Helm chart to the latest available on or before 2025-07-31
 actions_runner_controller_chart_version: "0.23.7"
 github_actions_docker_dind_tag: "20.10.24-dind-rootless"
