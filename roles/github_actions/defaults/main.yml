@@ -3,7 +3,6 @@ github_actions_runner_replicas_default: 1
 
 # Cap concurrent runner pods per repository so CI cannot consume the whole node.
 github_actions_runner_replicas_cap: 4
-github_actions_runner_cpu_request: "500m"
 github_actions_runner_memory_request: "1Gi"
 github_actions_runner_cpu_limit: "2"
 github_actions_runner_memory_limit: "4Gi"

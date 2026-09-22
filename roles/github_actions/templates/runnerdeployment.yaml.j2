@@ -22,7 +22,6 @@ spec:
           image: summerwind/actions-runner:{{ github_actions_runner_image_tag }}
           resources:
             requests:
-              cpu: {{ github_actions_runner_cpu_request }}
               memory: {{ github_actions_runner_memory_request }}
             limits:
               cpu: {{ github_actions_runner_cpu_limit }}
