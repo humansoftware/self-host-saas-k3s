@@ -24,7 +24,6 @@ spec:
             requests:
               memory: {{ github_actions_runner_memory_request }}
             limits:
-              cpu: {{ github_actions_runner_cpu_limit }}
               memory: {{ github_actions_runner_memory_limit }}
           volumeMounts:
             - name: docker-config
