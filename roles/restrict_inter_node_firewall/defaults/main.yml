@@ -1,0 +1,18 @@
+---
+# Ports that must only be reachable from the other k3s nodes.
+# The upstream k3s.orchestration.prereq role opens these with a bare
+# `ufw allow`, which means "from anywhere" and leaves the kubelet and the
+# Flannel data plane exposed on a public node.
+k3s_inter_node_ports:
+  - { port: "8472", proto: "udp" } # Flannel VXLAN data plane
+  - { port: "10250", proto: "tcp" } # Kubelet API
+  - { port: "5001", proto: "tcp" } # Spegel embedded registry
+  - { port: "51820", proto: "udp" } # Flannel WireGuard IPv4
+  - { port: "51821", proto: "udp" } # Flannel WireGuard IPv6
+
+# The k3s API is only contacted by agents and by the control plane, never by
+# arbitrary internet clients: `firewall_open_k3s_ports` is false and cluster
+# access goes through the SSH tunnel. Agents do not serve the API at all, so
+# this list is applied to server nodes only.
+k3s_api_restricted_ports:
+  - { port: "6443", proto: "tcp" }

@@ -23,8 +23,10 @@
   loop:
     - /etc/containerd/certs.d
     - /var/lib/rancher/k3s/agent/etc/containerd/certs.d
+  register: harbor_hosts_toml
 
-- name: Restart k3s to reload registry config
+- name: Restart the k3s service to reload registry config
   ansible.builtin.service:
-    name: k3s
+    name: "{{ 'k3s-agent' if 'agent' in group_names else 'k3s' }}"
     state: restarted
+  when: harbor_hosts_toml.results | selectattr('changed') | list | length > 0

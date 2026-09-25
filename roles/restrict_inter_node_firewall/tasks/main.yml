@@ -1,0 +1,63 @@
+---
+- name: Read the current UFW state
+  ansible.builtin.command:
+    cmd: ufw status
+  register: restrict_ufw_status
+  changed_when: false
+  check_mode: false
+
+- name: Skip when UFW is not active on this host
+  ansible.builtin.debug:
+    msg: "UFW is not active on {{ inventory_hostname }}; nothing to restrict."
+  when: "'Status: active' not in restrict_ufw_status.stdout"
+
+- name: Restrict inter-node ports to the other cluster nodes
+  when: "'Status: active' in restrict_ufw_status.stdout"
+  vars:
+    # Agents never serve the k3s API, so only the server restricts it.
+    restrict_ports_this_node: >-
+      {{
+        k3s_inter_node_ports
+        + (k3s_api_restricted_ports if 'server' in group_names else [])
+      }}
+  block:
+    - name: Build the list of peer node addresses
+      ansible.builtin.set_fact:
+        restrict_peer_addresses: >-
+          {{
+            groups['k3s_cluster']
+            | map('extract', hostvars)
+            | map(attribute='ansible_host')
+            | select('defined')
+            | reject('equalto', ansible_host)
+            | list
+          }}
+
+    - name: Find world-open rules for the inter-node ports
+      ansible.builtin.shell:
+        cmd: >-
+          ufw status | grep -E '^{{ item.port }}/{{ item.proto }}[[:space:]]+ALLOW[[:space:]]+IN[[:space:]]+Anywhere'
+        executable: /bin/bash
+      loop: "{{ restrict_ports_this_node }}"
+      register: restrict_world_open
+      changed_when: false
+      failed_when: false
+
+    - name: Remove the world-open rule for each inter-node port
+      ansible.builtin.command:
+        cmd: "ufw --force delete allow {{ item.item.port }}/{{ item.item.proto }}"
+      loop: "{{ restrict_world_open.results }}"
+      loop_control:
+        label: "{{ item.item.port }}/{{ item.item.proto }}"
+      when: item.rc == 0
+      changed_when: true
+
+    - name: Allow each inter-node port from every peer node only
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.0.port }}"
+        proto: "{{ item.0.proto }}"
+        src: "{{ item.1 }}"
+      loop: "{{ restrict_ports_this_node | product(restrict_peer_addresses) | list }}"
+      loop_control:
+        label: "{{ item.0.port }}/{{ item.0.proto }} from {{ item.1 }}"

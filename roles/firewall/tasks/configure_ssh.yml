@@ -24,6 +24,7 @@
     line: 'PasswordAuthentication no'
     state: present
     backup: true
+  register: sshd_password_auth
 
 - name: Allow new SSH port in UFW
   community.general.ufw:
@@ -38,3 +39,4 @@
   ansible.builtin.service:
     name: ssh
     state: restarted
+  when: sshd_password_auth.changed

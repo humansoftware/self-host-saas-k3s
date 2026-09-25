@@ -23,6 +23,14 @@
     - role: k3s_cluster
       tags: k3s_cluster
 
+- name: Restrict inter-node firewall exposure
+  hosts: k3s_cluster
+  become: true
+  gather_facts: false
+  roles:
+    - role: restrict_inter_node_firewall
+      tags: restrict_inter_node_firewall
+
 - name: Configure system maintenance (unattended-upgrades)
   hosts: k3s_cluster
   become: true
