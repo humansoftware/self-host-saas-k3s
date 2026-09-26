@@ -8,12 +8,7 @@
 
 - name: Set sanitized NodeHosts (IPv4 only)
   ansible.builtin.set_fact:
-    sanitized_nodehosts: |
-      {% for line in coredns_cm_for_sanitize.resources[0].data.get('NodeHosts', '').splitlines() %}
-      {% set parts = line.split() %}
-      {% if parts and (parts[0] | default('')).count('.') == 3 %}{{ line }}
-      {% endif %}
-      {% endfor %}
+    sanitized_nodehosts: "{{ coredns_cm_for_sanitize.resources[0].data.get('NodeHosts', '').splitlines() | select('match', '^\\d+\\.\\d+\\.\\d+\\.\\d+') | list | join('\n') }}"
 
 - name: Patch CoreDNS to use DNSSEC-validating upstreams and preserve NodeHosts (IPv4 only)
   kubernetes.core.k8s:
@@ -47,13 +42,3 @@
               loadbalance
           }
         NodeHosts: "{{ sanitized_nodehosts }}"
-
-- name: Restart CoreDNS to apply changes
-  kubernetes.core.k8s:
-    api_version: v1
-    kind: Pod
-    namespace: kube-system
-    label_selectors:
-      - k8s-app=coredns
-    state: absent
-    wait: true

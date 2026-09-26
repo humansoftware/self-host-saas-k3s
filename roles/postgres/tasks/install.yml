@@ -15,8 +15,17 @@
     release_namespace: "{{ postgres_namespace }}"
     create_namespace: false
     values:
+      image:
+        registry: "{{ postgres_image_registry }}"
+        repository: "{{ postgres_image_repository }}"
+        tag: "{{ postgres_image_tag }}"
       global:
         storageClass: "{{ postgres_storage_class }}"
+        security:
+          # Required because the server image is served from bitnamilegacy/*
+          # rather than the bitnami/* repo the chart's allow-list recognises.
+          # See https://github.com/bitnami/charts/issues/30850
+          allowInsecureImages: true
       auth:
         postgresPassword: "{{ postgres_admin_password }}"
         databases: "{{ postgres_databases }}"

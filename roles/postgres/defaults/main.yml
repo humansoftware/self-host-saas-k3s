@@ -15,4 +15,13 @@ postgres_storage_size: 8Gi
 # cache; a freshly built or new node fails with "not found".
 postgres_client_pod_image: "docker.io/bitnamilegacy/postgresql"
 postgres_client_pod_image_tag: "17.2.0-debian-12-r2"
+
+# The Postgres server image needs the same treatment as the client pod: the
+# tag is gone from bitnami/* upstream (confirmed: the tag 404s on Docker Hub),
+# so the release would become unpullable on any node rebuild. The image content
+# is identical in bitnamilegacy (verified: same image ID 4482f9df27822 on both
+# nodes), so switching the repository does not change what runs.
+postgres_image_registry: "docker.io"
+postgres_image_repository: "bitnamilegacy/postgresql"
+postgres_image_tag: "17.2.0-debian-12-r2"
 install_postgres: false

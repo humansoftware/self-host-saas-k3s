@@ -34,7 +34,7 @@
         params:
           server.insecure: true
         secret:
-          argocdServerAdminPassword: "{{ argocd_admin_password | password_hash('bcrypt') }}"
+          argocdServerAdminPassword: "{{ argocd_admin_password_hash }}"
           items:
             token: "{{ github_pat }}"
       notifications:
