@@ -39,6 +39,13 @@
   delegate_to: localhost
   become: false
 
+- name: Restrict network access to buildkitd
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'buildkitd-networkpolicy.yaml.j2') }}"
+  delegate_to: localhost
+  become: false
+
 - name: Create buildkit role for runner service accounts
   kubernetes.core.k8s:
     state: present
@@ -78,7 +85,23 @@
         kind: Role
         name: buildkit-runner
         apiGroup: rbac.authorization.k8s.io
-  loop: "{{ self_saas_projects | default([]) }}"
+  loop: "{{ self_saas_projects | default([]) | selectattr('name', 'in', buildkit_projects | default([])) | list }}"
   no_log: true
+  delegate_to: localhost
+  become: false
+
+# Projects removed from buildkit_projects keep their RoleBinding otherwise, so
+# prune anything that is no longer declared. A stale binding is silent
+# over-permission: the runner keeps pods/exec in the buildkit namespace.
+- name: Remove buildkit role bindings for projects that no longer build
+  kubernetes.core.k8s:
+    state: absent
+    api_version: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    name: "buildkit-runner-{{ item }}"
+    namespace: "{{ buildkit_namespace }}"
+  loop: >-
+    {{ self_saas_projects | default([]) | map(attribute='name') | list
+       | difference(buildkit_projects | default([])) }}
   delegate_to: localhost
   become: false

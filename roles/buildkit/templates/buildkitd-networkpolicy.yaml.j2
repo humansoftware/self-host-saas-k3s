@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: buildkitd-ingress
+  namespace: {{ buildkit_namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: buildkitd
+  policyTypes:
+    - Ingress
+  ingress:
+    # Only the projects that actually build through this BuildKit. Their runner
+    # pods carry the actions-runner label written by the runner controller.
+    # Everything else in the cluster is denied, so a compromised pod cannot
+    # reach the container runtime or its privileged buildkitd process.
+{% for project in buildkit_projects | default([]) %}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: "{{ project }}"
+          podSelector:
+            matchLabels:
+              actions-runner: ""
+      ports:
+        - protocol: TCP
+          port: {{ buildkit_service_port }}
+{% endfor %}
+    # Traffic originating inside the buildkit namespace, so the buildkit client
+    # and in-namespace tooling keep working.
+    - from:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: {{ buildkit_service_port }}
