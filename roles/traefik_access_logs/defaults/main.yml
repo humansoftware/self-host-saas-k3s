@@ -1,0 +1,9 @@
+---
+traefik_access_logs_replicas: 1
+# All public web DNS records currently resolve to this node. With
+# externalTrafficPolicy=Local, Traefik must have a local endpoint on the
+# advertised ingress node for the source address to be preserved.
+traefik_access_logs_node: human-server-1
+# Use Cluster for the first, staged rollout while moving the single pod from
+# the agent to the master. The final Ansible run overrides this to Local.
+traefik_access_logs_external_traffic_policy: Local

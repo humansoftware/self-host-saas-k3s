@@ -5,6 +5,13 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
+    deployment:
+      replicas: {{ traefik_access_logs_replicas }}
+    nodeSelector:
+      kubernetes.io/hostname: {{ traefik_access_logs_node }}
+    service:
+      spec:
+        externalTrafficPolicy: {{ traefik_access_logs_external_traffic_policy }}
     logs:
       access:
         enabled: true
