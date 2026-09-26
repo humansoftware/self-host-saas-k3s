@@ -30,6 +30,8 @@
         postgresPassword: "{{ postgres_admin_password }}"
         databases: "{{ postgres_databases }}"
       primary:
+        nodeSelector:
+          kubernetes.io/hostname: "{{ postgres_node_selector_hostname }}"
         resources:
           requests:
             memory: 512Mi

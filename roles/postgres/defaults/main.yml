@@ -24,4 +24,9 @@ postgres_client_pod_image_tag: "17.2.0-debian-12-r2"
 postgres_image_registry: "docker.io"
 postgres_image_repository: "bitnamilegacy/postgresql"
 postgres_image_tag: "17.2.0-debian-12-r2"
+
+# Postgres uses longhorn-single-replica. Keep the StatefulSet on the node that
+# hosts its only Longhorn replica so database WAL/data I/O stays local instead
+# of crossing the node network.
+postgres_node_selector_hostname: human-server-1
 install_postgres: false
