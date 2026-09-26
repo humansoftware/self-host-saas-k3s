@@ -31,6 +31,21 @@
   delegate_to: localhost
   run_once: true
 
+- name: Wait until the previous psql pod is fully gone
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ postgres_namespace }}"
+    name: psql-client-create-users
+  register: pod_absent_users
+  # Pod deletion is asynchronous; creating the replacement too early makes
+  # `state: present` match the terminating pod and skip the create.
+  until: (pod_absent_users.resources | length) == 0
+  retries: 30
+  delay: 2
+  delegate_to: localhost
+  run_once: true
+
 - name: Run user creation SQL in a temporary Postgres client pod
   kubernetes.core.k8s:
     state: present
@@ -44,7 +59,7 @@
         restartPolicy: Never
         containers:
           - name: psql
-            image: "docker.io/bitnami/postgresql:{{ postgres_client_pod_image_tag }}"
+            image: "{{ postgres_client_pod_image }}:{{ postgres_client_pod_image_tag }}"
             env:
               - name: PGPASSWORD
                 value: "{{ postgres_admin_password }}"

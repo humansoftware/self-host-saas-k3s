@@ -31,6 +31,22 @@
   delegate_to: localhost
   run_once: true
 
+- name: Wait until the previous psql pod is fully gone
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ postgres_namespace }}"
+    name: psql-client-create-databases
+  register: pod_absent_db
+  # Pod deletion is asynchronous. Creating the replacement while the old pod is
+  # still terminating makes `state: present` match the terminating pod and skip
+  # the create, so the pod then disappears and the wait below never succeeds.
+  until: (pod_absent_db.resources | length) == 0
+  retries: 30
+  delay: 2
+  delegate_to: localhost
+  run_once: true
+
 - name: Run database creation SQL in a temporary Postgres client pod
   kubernetes.core.k8s:
     state: present
@@ -44,12 +60,14 @@
         restartPolicy: Never
         containers:
           - name: psql
-            image: "docker.io/bitnami/postgresql:{{ postgres_client_pod_image_tag }}"
+            image: "{{ postgres_client_pod_image }}:{{ postgres_client_pod_image_tag }}"
             env:
               - name: PGPASSWORD
                 value: "{{ postgres_admin_password }}"
             command: ["psql"]
             args:
+              - "-v"
+              - "ON_ERROR_STOP=1"
               - "-h"
               - "postgres-postgresql"
               - "-U"
@@ -83,3 +101,30 @@
   delay: 5
   delegate_to: localhost
   run_once: true
+
+- name: Read the outcome of the database creation pod
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ postgres_namespace }}"
+    name: psql-client-create-databases
+  register: pod_outcome_db
+  delegate_to: localhost
+  run_once: true
+
+- name: Get the psql output
+  kubernetes.core.k8s_log:
+    name: psql-client-create-databases
+    namespace: "{{ postgres_namespace }}"
+  register: psql_output_db
+  delegate_to: localhost
+  run_once: true
+  ignore_errors: true
+
+- name: Fail when the database creation pod did not succeed
+  ansible.builtin.fail:
+    msg: >-
+      psql exited non-zero (phase
+      {{ pod_outcome_db.resources[0].status.phase | default('unknown') }}).
+      Output: {{ psql_output_db.log | default('could not read pod logs') }}
+  when: (pod_outcome_db.resources[0].status.phase | default('')) != 'Succeeded'

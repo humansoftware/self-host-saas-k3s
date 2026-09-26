@@ -4,3 +4,15 @@ buildkit_image: moby/buildkit:v0.26.3
 buildkit_listen_addr: tcp://0.0.0.0:1234
 buildkit_service_port: 1234
 buildkit_registry_host: "{{ harbor_domain }}"
+
+# The buildkitd cache lives on an emptyDir, which has no size limit of its own.
+# Without an ephemeral-storage request the scheduler cannot account for the
+# cache and the kubelet evicts this pod first when node storage runs low
+# (observed: "The node was low on resource: ephemeral-storage", which left
+# buildkitd failing on a stale buildkitd.lock). The limit is sized above
+# buildkitd's own GC maxUsedSpace (12GB) so the cache is trimmed by buildkit's
+# GC before the kubelet has to intervene.
+buildkit_ephemeral_storage_request: 5Gi
+buildkit_ephemeral_storage_limit: 16Gi
+buildkit_memory_request: 2Gi
+buildkit_memory_limit: 6Gi

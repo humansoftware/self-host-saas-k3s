@@ -1,4 +1,7 @@
 {% for project in self_saas_projects if project.postgres is defined and project.postgres.enabled %}
--- Create database (ignore error if exists)
-CREATE DATABASE "{{ project.name }}";
+-- CREATE DATABASE has no IF NOT EXISTS in PostgreSQL, and plain `psql -f`
+-- without ON_ERROR_STOP exits 0 even when every statement failed. Guard the
+-- statement so re-running this against an existing database is a no-op.
+SELECT 'CREATE DATABASE "{{ project.name }}"'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{{ project.name }}')\gexec
 {% endfor %}

@@ -27,6 +27,13 @@ spec:
             - /etc/buildkit/buildkitd.toml
           ports:
             - containerPort: {{ buildkit_service_port }}
+          resources:
+            requests:
+              memory: {{ buildkit_memory_request }}
+              ephemeral-storage: {{ buildkit_ephemeral_storage_request }}
+            limits:
+              memory: {{ buildkit_memory_limit }}
+              ephemeral-storage: {{ buildkit_ephemeral_storage_limit }}
           volumeMounts:
             - name: buildkit-config
               mountPath: /etc/buildkit/buildkitd.toml

@@ -7,5 +7,12 @@ postgres_chart_version: "16.3.0"
 postgres_storage_class: longhorn-single-replica
 postgres_admin_password: "changeme"
 postgres_storage_size: 8Gi
+# Bitnami removed versioned tags from the `bitnami/*` Docker Hub repositories
+# (only `latest` remains); the tagged images moved to `bitnamilegacy/*`. The
+# same tag is still published there, so the throwaway psql client can pull the
+# exact client version matching the server. Without this, the run only
+# succeeded because the server node still had the image in its local containerd
+# cache; a freshly built or new node fails with "not found".
+postgres_client_pod_image: "docker.io/bitnamilegacy/postgresql"
 postgres_client_pod_image_tag: "17.2.0-debian-12-r2"
 install_postgres: false
