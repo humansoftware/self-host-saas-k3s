@@ -5,14 +5,9 @@ buildkit_listen_addr: tcp://0.0.0.0:1234
 buildkit_service_port: 1234
 buildkit_registry_host: "{{ harbor_domain }}"
 
-# Projects whose GitHub Actions runners build images through this BuildKit. Only
-# these get the buildkit-runner Role, which grants pods/exec in the buildkit
-# namespace. Verified against the BuildKit build history: it contains
-# postward-cloud workflow runs and no entries for the other projects. Keep this
-# list explicit rather than granting every project, and add a project here only
-# once it actually builds.
-buildkit_projects:
-  - postward
+# Every declared project gets the same BuildKit capability. The project list in
+# secrets.prod.yml is the infrastructure contract; this role must not hardcode
+# a project name or maintain a second opt-in list.
 
 # The buildkitd cache lives on an emptyDir, which has no size limit of its own.
 # Without an ephemeral-storage request the scheduler cannot account for the

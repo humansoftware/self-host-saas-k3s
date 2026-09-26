@@ -85,23 +85,36 @@
         kind: Role
         name: buildkit-runner
         apiGroup: rbac.authorization.k8s.io
-  loop: "{{ self_saas_projects | default([]) | selectattr('name', 'in', buildkit_projects | default([])) | list }}"
+  loop: "{{ self_saas_projects | default([]) }}"
   no_log: true
   delegate_to: localhost
   become: false
 
-# Projects removed from buildkit_projects keep their RoleBinding otherwise, so
-# prune anything that is no longer declared. A stale binding is silent
-# over-permission: the runner keeps pods/exec in the buildkit namespace.
-- name: Remove buildkit role bindings for projects that no longer build
+- name: List existing buildkit role bindings
+  kubernetes.core.k8s_info:
+    api_version: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    namespace: "{{ buildkit_namespace }}"
+  register: buildkit_bindings
+  delegate_to: localhost
+  become: false
+
+- name: Remove stale buildkit role bindings
   kubernetes.core.k8s:
     state: absent
     api_version: rbac.authorization.k8s.io/v1
     kind: RoleBinding
-    name: "buildkit-runner-{{ item }}"
+    name: "{{ item.metadata.name }}"
     namespace: "{{ buildkit_namespace }}"
   loop: >-
-    {{ self_saas_projects | default([]) | map(attribute='name') | list
-       | difference(buildkit_projects | default([])) }}
+    {{
+      buildkit_bindings.resources
+      | selectattr('metadata.name', 'match', '^buildkit-runner-')
+      | rejectattr('metadata.name', 'in',
+          (self_saas_projects | default([]) | map(attribute='name')
+          | map('regex_replace', '^', 'buildkit-runner-') | list))
+      | list
+    }}
   delegate_to: localhost
   become: false
+

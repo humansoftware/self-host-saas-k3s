@@ -14,11 +14,11 @@ spec:
     # pods carry the actions-runner label written by the runner controller.
     # Everything else in the cluster is denied, so a compromised pod cannot
     # reach the container runtime or its privileged buildkitd process.
-{% for project in buildkit_projects | default([]) %}
+{% for project in self_saas_projects | default([]) %}
     - from:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: "{{ project }}"
+              kubernetes.io/metadata.name: "{{ project.name }}"
           podSelector:
             matchLabels:
               actions-runner: ""
