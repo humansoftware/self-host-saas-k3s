@@ -38,6 +38,14 @@
     - role: system_maintenance
       tags: system_maintenance
 
+- name: Configure Traefik access logs
+  hosts: server
+  become: true
+  gather_facts: false
+  roles:
+    - role: traefik_access_logs
+      tags: traefik_access_logs
+
 - name: Configure local k3s tunnel
   hosts: localhost
   gather_facts: false

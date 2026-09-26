@@ -1,0 +1,16 @@
+---
+- name: Ensure the k3s packaged chart manifests directory exists
+  ansible.builtin.file:
+    path: /var/lib/rancher/k3s/server/manifests
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install persistent Traefik access-log HelmChartConfig
+  ansible.builtin.template:
+    src: traefik-config.yaml.j2
+    dest: /var/lib/rancher/k3s/server/manifests/traefik-access-logs.yaml
+    owner: root
+    group: root
+    mode: "0644"
