@@ -1,0 +1,9 @@
+---
+# Consumed by the upstream k3s.orchestration.k3s_agent role when it renders
+# ExecStart in /etc/systemd/system/k3s-agent.service.
+#
+# group_vars/all sets `k3s_agent_extra_args`, which nothing reads: the role looks
+# for `extra_agent_args`. It must stay empty here — `k3s agent` rejects
+# --tls-san, which is a server-only flag, and passing it makes the unit fail to
+# start with "flag provided but not defined".
+extra_agent_args: ""

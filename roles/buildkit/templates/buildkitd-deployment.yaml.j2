@@ -27,6 +27,12 @@ spec:
             - /etc/buildkit/buildkitd.toml
           ports:
             - containerPort: {{ buildkit_service_port }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ buildkit_service_port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
           resources:
             requests:
               memory: {{ buildkit_memory_request }}

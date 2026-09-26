@@ -76,3 +76,44 @@
   ansible.builtin.include_role:
     name: k3s.orchestration.k3s_agent
   when: "'agent' in group_names"
+
+# The upstream k3s_agent role rewrites ExecStart with a regexp that only matches
+# up to `agent \`, then re-inserts the `--server` and argument lines that are
+# already present. Every run therefore appended another copy, restarted
+# k3s-agent — which tears down every container on the node — and grew the unit
+# without bound.
+#
+# Rendering the exact text the upstream template produces, right after it, makes
+# the next upstream replace a no-op: the unit is already in the shape that role
+# wants, so it reports no change and leaves k3s-agent alone. The trailing
+# backslash and argument line must match that template character for character.
+- name: Read the current k3s-agent unit
+  ansible.builtin.slurp:
+    src: "{{ systemd_dir }}/k3s-agent.service"
+  register: k3s_agent_unit_raw
+  vars:
+    systemd_dir: "/etc/systemd/system"
+  when: "'agent' in group_names"
+
+- name: Build the canonical k3s-agent ExecStart
+  ansible.builtin.set_fact:
+    k3s_agent_execstart: "ExecStart=/usr/local/bin/k3s agent --server https://{{ api_endpoint }}:{{ api_port }}"
+  when: "'agent' in group_names"
+
+- name: Normalise the k3s-agent ExecStart block
+  ansible.builtin.replace:
+    path: "{{ systemd_dir }}/k3s-agent.service"
+    regexp: '(?sm)^ExecStart=/usr/local/bin/k3s \\\n(    .*\n)*|^ExecStart=/usr/local/bin/k3s .*$'
+    replace: "{{ k3s_agent_execstart }}"
+  register: k3s_agent_unit_normalized
+  vars:
+    systemd_dir: "/etc/systemd/system"
+  when: "'agent' in group_names"
+
+- name: Restart k3s-agent only when the unit actually changed
+  ansible.builtin.systemd:
+    name: k3s-agent
+    daemon_reload: true
+    state: "{{ 'restarted' if k3s_agent_unit_normalized.changed else 'started' }}"
+    enabled: true
+  when: "'agent' in group_names"
